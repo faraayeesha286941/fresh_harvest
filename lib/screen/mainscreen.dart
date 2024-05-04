@@ -2,10 +2,12 @@
 import 'package:flutter/material.dart';
 
 class MainScreen extends StatelessWidget {
+  const MainScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Column(children: [
-      Padding(
+      const Padding(
         padding: EdgeInsets.all(8.0),
         child: Row(
           children: [
@@ -14,12 +16,12 @@ class MainScreen extends StatelessWidget {
           ],
         ),
       ),
-      Text('Categories'),
+      const Text('Categories'),
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: List.generate(5, (index) => IconButton(icon: Icon(Icons.circle), onPressed: null)),
+        children: List.generate(5, (index) => const IconButton(icon: Icon(Icons.circle), onPressed: null)),
       ),
-      Spacer(),
+      const Spacer(),
     ]);
   }
 }

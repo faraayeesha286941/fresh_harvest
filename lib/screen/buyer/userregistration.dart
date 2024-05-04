@@ -5,12 +5,14 @@ import 'dart:convert';
 import 'package:fresh_harvest/appconfig/myconfig.dart';
 
 void main() {
-  runApp(MaterialApp(
+  runApp(const MaterialApp(
     home: RegistrationPage(),
   ));
 }
 
 class RegistrationPage extends StatefulWidget {
+  const RegistrationPage({super.key});
+
   @override
   _RegistrationPageState createState() => _RegistrationPageState();
 }
@@ -53,14 +55,14 @@ class _RegistrationPageState extends State<RegistrationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Registration')),
+      appBar: AppBar(title: const Text('Registration')),
       body: Center(
         child: SingleChildScrollView(
-          padding: EdgeInsets.only(top: 10.0, bottom: 10.0),
+          padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Padding(
+              const Padding(
                 padding: EdgeInsets.only(bottom: 8.0, left: 20.0, right: 20.0),
                 child: Align(
                   alignment: Alignment.centerLeft,
@@ -68,10 +70,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.0),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: TextField(
                   controller: firstNameController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     hintText: '',
                     isDense: true,
@@ -79,7 +81,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   ),
                 ),
               ),
-              Padding(
+              const Padding(
                 padding: EdgeInsets.only(bottom: 8.0, left: 20.0, right: 20.0),
                 child: Align(
                   alignment: Alignment.centerLeft,
@@ -87,10 +89,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.0),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: TextField(
                   controller: lastNameController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     hintText: '',
                     isDense: true,
@@ -98,7 +100,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   ),
                 ),
               ),
-              Padding(
+              const Padding(
                 padding: EdgeInsets.only(bottom: 8.0, left: 20.0, right: 20.0),
                 child: Align(
                   alignment: Alignment.centerLeft,
@@ -106,10 +108,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.0),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: TextField(
                   controller: usernameController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     hintText: '',
                     isDense: true,
@@ -117,7 +119,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   ),
                 ),
               ),
-              Padding(
+              const Padding(
                 padding: EdgeInsets.only(bottom: 8.0, left: 20.0, right: 20.0),
                 child: Align(
                   alignment: Alignment.centerLeft,
@@ -125,10 +127,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.0),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: TextField(
                   controller: emailController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     hintText: '',
                     isDense: true,
@@ -136,7 +138,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   ),
                 ),
               ),
-              Padding(
+              const Padding(
                 padding: EdgeInsets.only(bottom: 8.0, left: 20.0, right: 20.0),
                 child: Align(
                   alignment: Alignment.centerLeft,
@@ -144,10 +146,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.0),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: TextField(
                   controller: passwordController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     hintText: '',
                     isDense: true,
@@ -155,7 +157,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   ),
                 ),
               ),
-              Padding(
+              const Padding(
                 padding: EdgeInsets.only(bottom: 8.0, left: 20.0, right: 20.0),
                 child: Align(
                   alignment: Alignment.centerLeft,
@@ -163,10 +165,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.0),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: TextField(
                   controller: retypePasswordController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     hintText: '',
                     isDense: true,
@@ -174,7 +176,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   ),
                 ),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               ElevatedButton(
                 onPressed: () {
                   if (passwordController.text == retypePasswordController.text) {
@@ -183,7 +185,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     Fluttertoast.showToast(msg: 'Passwords do not match');
                   }
                 },
-                child: Text('Register'),
+                child: const Text('Register'),
               ),
             ],
           ),

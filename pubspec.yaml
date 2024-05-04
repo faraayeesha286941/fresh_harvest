@@ -11,8 +11,11 @@ dependencies:
     sdk: flutter
   fluttertoast: ^8.2.5
   http: ^1.1.0
+  image_picker: ^1.0.7
   shared_preferences: ^2.0.15
 
+  path: any
+  http_parser: any
 dev_dependencies:
   flutter_test:
     sdk: flutter
