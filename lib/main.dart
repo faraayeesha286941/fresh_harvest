@@ -1,21 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:fresh_harvest/screen/splashscreen.dart';
 import 'package:fresh_harvest/screen/persistent_bottom_nav.dart';
+import 'package:fresh_harvest/screen/splashscreen.dart';
+import 'package:fresh_harvest/screen/middlescreen.dart';
 
 void main() {
-  runApp(const MainApp());
+  runApp(MyApp());
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
-
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      initialRoute: '/',
+      title: 'Flutter App',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+      home: SplashScreen(), // Set SplashScreen as home
       routes: {
-        '/': (context) => const SplashScreen(),
-        '/persistentBottomNav': (context) => const PersistentBottomNav(),
+        '/middleScreen': (context) => MiddleScreen(),
+'/home': (context) => PersistentBottomNav(),
+
       },
     );
   }

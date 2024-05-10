@@ -4,6 +4,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'dart:convert';
 import 'package:fresh_harvest/appconfig/myconfig.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:fresh_harvest/screen/mainscreen.dart';
 
 
 void main() {
@@ -24,31 +25,38 @@ class _LoginPageState extends State<LoginPage> {
   TextEditingController passwordController = TextEditingController();
 
   void loginUser() async {
-    final response = await http.post(
-      Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/login_user.php'),
-      body: {
-        'login': loginController.text,
-        'password': passwordController.text,
-      },
-    );
+  final response = await http.post(
+    Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/login_user.php'),
+    body: {
+      'login': loginController.text,
+      'password': passwordController.text,
+    },
+  );
 
   if (response.statusCode == 200) {
-  var jsonResponse = response.body;
-  print(jsonResponse);
-  if (jsonResponse.startsWith('success')) {
-    jsonResponse = jsonResponse.substring('success'.length);
-    var data = json.decode(jsonResponse);
-    // Save user data here
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    // Replace 'userEmail' with the actual data you want to save. For example:
-    await prefs.setString('userEmail', data['email']); // Assuming 'email' is a key returned by your API
-    Fluttertoast.showToast(msg: data['message']);
+    var jsonResponse = response.body;
+    print(jsonResponse);
+    if (jsonResponse.startsWith('success')) {
+      jsonResponse = jsonResponse.substring('success'.length);
+      var data = json.decode(jsonResponse);
+      // Save user data here
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('userEmail', data['email']);
+      await prefs.setString('userPassword', data['password']);
+      await prefs.setBool('isLoggedIn', true);  // Set the isLoggedIn flag
+
+      // Navigate to MainScreen after successful login
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => MainScreen()),
+      );
+    } else {
+      Fluttertoast.showToast(msg: 'Error logging in');
+    }
   } else {
-    Fluttertoast.showToast(msg: 'Error logging in');
+    Fluttertoast.showToast(msg: 'Failed to connect to the server');
   }
 }
-
-  }
 
   @override
   Widget build(BuildContext context) {

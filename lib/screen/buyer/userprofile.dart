@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:fresh_harvest/appconfig/myconfig.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class UserProfile extends StatefulWidget {
   const UserProfile({super.key});
@@ -22,26 +23,40 @@ class _UserProfileState extends State<UserProfile> {
   }
 
   _loadUserProfile() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? userEmail = prefs.getString('userEmail');
+
+  if (userEmail != null) {
     var url = Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/userregistration.php');
-    var response = await http.post(url, body: {});
+    var response = await http.post(url, body: {
+      'email': userEmail,  // Include the email parameter in the request
+    });
+
     if (response.statusCode == 200) {
-  var jsonResponse = response.body;
-  if (!jsonResponse.contains("Email parameter missing") && !jsonResponse.contains("User not found")) {
-    print(jsonResponse);
-    if (jsonResponse.startsWith('success')) {
-      jsonResponse = jsonResponse.substring('success'.length);
-      var data = json.decode(jsonResponse);
-      setState(() {
-        firstName = data['first_name'];
-        lastName = data['last_name'];
-        email = data['email'];
-      });
+      var jsonResponse = response.body;
+      print(jsonResponse);
+      if (!jsonResponse.contains("Email parameter missing") && !jsonResponse.contains("User not found")) {
+        if (jsonResponse.startsWith('success')) {
+          jsonResponse = jsonResponse.substring('success'.length);
+          var data = json.decode(jsonResponse);
+          setState(() {
+            firstName = data['first_name'];
+            lastName = data['last_name'];
+            email = data['email'];
+          });
+        }
+      } else {
+        print(jsonResponse);
+      }
+    } else {
+      // Handle other status codes or errors
+      print('Server error: ${response.statusCode}');
     }
   } else {
-    print(jsonResponse);
+    print('Email not found in SharedPreferences');
+    // Perhaps navigate to login screen or show an error message
   }
 }
-  }
 
   @override
   Widget build(BuildContext context) {

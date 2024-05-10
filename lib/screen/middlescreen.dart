@@ -18,13 +18,20 @@ class _MiddleScreenState extends State<MiddleScreen> {
   }
 
   checkLoginStatus() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
 
-    if (isLoggedIn) {
-      Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (context) => MainScreen()));
-    }
+  if (isLoggedIn) {
+    Navigator.pushReplacementNamed(context, '/home');
+  } else {
+    // Handle not logged in scenario, maybe navigate to login page again or show message.
+    print("User is not logged in.");
+  }
+}
+
+  clearSharedPreferences() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
   }
 
   @override
@@ -47,6 +54,12 @@ class _MiddleScreenState extends State<MiddleScreen> {
                   MaterialPageRoute(
                       builder: (context) => LoginPage())),
               child: Text("Log In"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                clearSharedPreferences();
+              },
+              child: Text("Debug: Clear SharedPreferences"),
             ),
           ],
         ),
