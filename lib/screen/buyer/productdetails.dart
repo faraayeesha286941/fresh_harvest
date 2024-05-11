@@ -20,7 +20,9 @@ class _ProductDetailsState extends State<ProductDetails> {
   }
 
   Future<Product> fetchProductDetails() async {
-    final response = await http.get(Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/getproduct.php'));
+    String serverUrl = MyConfig().SERVER;  // Use your config class to get the server URL
+    print("Using server URL: $serverUrl");
+    final response = await http.get(Uri.parse('$serverUrl/getlatestproducts.php'));
 
     if (response.statusCode == 200) {
       return Product.fromJson(jsonDecode(response.body));
@@ -32,29 +34,17 @@ class _ProductDetailsState extends State<ProductDetails> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Product Details'),
-      ),
+      appBar: AppBar(title: const Text('Product Details')),
       body: FutureBuilder<Product>(
         future: futureProduct,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const CircularProgressIndicator();
           } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Text("Error: ${snapshot.error}");
           }
-
-          return Column(
-            children: <Widget>[
-              Image.network('https://via.placeholder.com/150'),
-              const SizedBox(height: 8),
-              Text(snapshot.data!.name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Text(snapshot.data!.description, style: const TextStyle(fontSize: 16)),
-              const SizedBox(height: 8),
-              Text('Seller: ${snapshot.data!.seller}', style: const TextStyle(fontSize: 14)),
-            ],
-          );
+          // assuming Product has a proper constructor and fromJson method
+          return Text('Product Name: ${snapshot.data?.name}');
         },
       ),
     );
@@ -63,16 +53,12 @@ class _ProductDetailsState extends State<ProductDetails> {
 
 class Product {
   final String name;
-  final String description;
-  final String seller;
 
-  Product({required this.name, required this.description, required this.seller});
+  Product({required this.name});
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
       name: json['name'],
-      description: json['description'],
-      seller: json['seller'],
     );
   }
 }
