@@ -16,49 +16,62 @@ class _ProductDetailsState extends State<ProductDetails> {
   @override
   void initState() {
     super.initState();
+    print("ProductDetails initState called"); // Add this print
     futureProduct = fetchProductDetails();
   }
 
   Future<Product> fetchProductDetails() async {
-    String serverUrl = MyConfig().SERVER;  // Use your config class to get the server URL
-    print("Using server URL: $serverUrl");
-    final response = await http.get(Uri.parse('$serverUrl/getlatestproducts.php'));
+  print("fetchProductDetails called"); // Add this print
+  String serverUrl = MyConfig().SERVER;
+  print("Using server URL: $serverUrl");
 
-    if (response.statusCode == 200) {
-      return Product.fromJson(jsonDecode(response.body));
-    } else {
-      throw Exception('Failed to load product');
-    }
+  String requestUrl = '$serverUrl/getlatestproducts.php';
+  print("Final Request URL: $requestUrl");
+  final response = await http.get(Uri.parse(requestUrl));
+
+  if (response.statusCode == 200) {
+    return Product.fromJson(jsonDecode(response.body));
+  } else {
+    throw Exception('Failed to load product');
   }
+}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Product Details')),
-      body: FutureBuilder<Product>(
-        future: futureProduct,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const CircularProgressIndicator();
-          } else if (snapshot.hasError) {
-            return Text("Error: ${snapshot.error}");
-          }
-          // assuming Product has a proper constructor and fromJson method
-          return Text('Product Name: ${snapshot.data?.name}');
-        },
-      ),
-    );
+  appBar: AppBar(title: const Text('Product Details')),
+  body: FutureBuilder<Product>(
+    future: futureProduct,
+    builder: (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return const CircularProgressIndicator();
+      } else if (snapshot.hasError) {
+        return Text("Error: ${snapshot.error}");
+      }
+      return Column(
+        children: [
+          Text('Product Name: ${snapshot.data?.name}'),
+          if (snapshot.data?.imageUrl != null)
+            Image.network(snapshot.data!.imageUrl),
+        ],
+      );
+    },
+  ),
+);
+
   }
 }
 
 class Product {
   final String name;
+  final String imageUrl;
 
-  Product({required this.name});
+  Product({required this.name, required this.imageUrl});
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
       name: json['name'],
+      imageUrl: json['image_url'],
     );
   }
 }

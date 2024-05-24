@@ -21,17 +21,17 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<List<Product>> fetchProducts() async {
-  final response = await http.get(Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/getlatestproducts.php'));
+    final serverUrl = MyConfig().SERVER;
+    final response = await http.get(Uri.parse('$serverUrl/fresh_harvest/php/getlatestproducts.php?server_url=$serverUrl'));
 
-  if (response.statusCode == 200) {
-    print(response.body);
-    List<dynamic> productsJson = jsonDecode(response.body);
-    return productsJson.map((json) => Product.fromJson(json)).toList();
-  } else {
-    throw Exception('Failed to load products');
+    if (response.statusCode == 200) {
+      print(response.body);
+      List<dynamic> productsJson = jsonDecode(response.body);
+      return productsJson.map((json) => Product.fromJson(json, serverUrl)).toList();
+    } else {
+      throw Exception('Failed to load products');
+    }
   }
-}
-
 
   void clearSharedPreferences(BuildContext context) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -130,7 +130,7 @@ class Product {
 
   Product({required this.name, required this.imageUrl});
 
-  factory Product.fromJson(Map<String, dynamic> json) {
+  factory Product.fromJson(Map<String, dynamic> json, String serverUrl) {
     return Product(
       name: json['name'],
       imageUrl: json['image_url'],
