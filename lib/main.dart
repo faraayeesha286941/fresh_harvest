@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:fresh_harvest/screen/persistent_bottom_nav.dart';
 import 'package:fresh_harvest/screen/splashscreen.dart';
 import 'package:fresh_harvest/screen/middlescreen.dart';
-import 'package:fresh_harvest/screen/buyer/productdetails.dart';
 
 void main() {
   runApp(MyApp());
@@ -21,9 +20,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/middleScreen': (context) => MiddleScreen(),
         '/home': (context) => PersistentBottomNav(),
-        '/productDetails': (context) => ProductDetails(), // Add ProductDetails route
       },
     );
   }
 }
-

@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:fresh_harvest/appconfig/myconfig.dart';
+import 'package:fresh_harvest/screen/buyer/productdetails.dart';  // Import the ProductDetails screen
 import 'package:fresh_harvest/screen/buyer/buyertabscreen.dart'; // Import the BuyerTabScreen
 
 class MainScreen extends StatefulWidget {
@@ -27,7 +28,6 @@ class _MainScreenState extends State<MainScreen> {
     final response = await http.get(Uri.parse('$serverUrl/fresh_harvest/php/getlatestproducts.php?server_url=$serverUrl'));
 
     if (response.statusCode == 200) {
-      print(response.body);
       List<dynamic> productsJson = jsonDecode(response.body);
       return productsJson.map((json) => Product.fromJson(json)).toList();
     } else {
@@ -114,6 +114,8 @@ class _MainScreenState extends State<MainScreen> {
                     return const Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
                     return Text('Error: ${snapshot.error}');
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Text('No products found');
                   }
 
                   return GridView.builder(
@@ -124,12 +126,22 @@ class _MainScreenState extends State<MainScreen> {
                     itemCount: snapshot.data?.length ?? 0,
                     itemBuilder: (context, index) {
                       var product = snapshot.data![index];
-                      return Card(
-                        child: Column(
-                          children: <Widget>[
-                            Image.network(product.imageUrl),
-                            Text(product.name),
-                          ],
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ProductDetails(productId: product.id),
+                            ),
+                          );
+                        },
+                        child: Card(
+                          child: Column(
+                            children: <Widget>[
+                              Image.network(product.imageUrl),
+                              Text(product.name),
+                            ],
+                          ),
                         ),
                       );
                     },
@@ -145,15 +157,17 @@ class _MainScreenState extends State<MainScreen> {
 }
 
 class Product {
+  final String id;
   final String name;
   final String imageUrl;
 
-  Product({required this.name, required this.imageUrl});
+  Product({required this.id, required this.name, required this.imageUrl});
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
-      name: json['name'],
-      imageUrl: json['image_url'],
+      id: json['product_id'] ?? '',
+      name: json['name'] ?? '',
+      imageUrl: json['image_url'] ?? '',
     );
   }
 }

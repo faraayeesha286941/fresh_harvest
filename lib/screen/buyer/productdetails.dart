@@ -1,10 +1,12 @@
-import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:fresh_harvest/appconfig/myconfig.dart';
 
 class ProductDetails extends StatefulWidget {
-  const ProductDetails({Key? key}) : super(key: key);
+  final String productId;
+
+  const ProductDetails({Key? key, required this.productId}) : super(key: key);
 
   @override
   _ProductDetailsState createState() => _ProductDetailsState();
@@ -16,62 +18,87 @@ class _ProductDetailsState extends State<ProductDetails> {
   @override
   void initState() {
     super.initState();
-    print("ProductDetails initState called"); // Add this print
-    futureProduct = fetchProductDetails();
+    futureProduct = fetchProductDetails(widget.productId);
   }
 
-  Future<Product> fetchProductDetails() async {
-  print("fetchProductDetails called"); // Add this print
-  String serverUrl = MyConfig().SERVER;
-  print("Using server URL: $serverUrl");
+  Future<Product> fetchProductDetails(String productId) async {
+    final response = await http.get(Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/getproductdetails.php?product_id=$productId'));
 
-  String requestUrl = '$serverUrl/getlatestproducts.php';
-  print("Final Request URL: $requestUrl");
-  final response = await http.get(Uri.parse(requestUrl));
+    // Print the response body for debugging
+    print('Response body: ${response.body}');
 
-  if (response.statusCode == 200) {
-    return Product.fromJson(jsonDecode(response.body));
-  } else {
-    throw Exception('Failed to load product');
+    if (response.statusCode == 200) {
+      // Ensure the response is valid JSON
+      try {
+        return Product.fromJson(jsonDecode(response.body));
+      } catch (e) {
+        throw Exception('Failed to parse product details');
+      }
+    } else {
+      throw Exception('Failed to load product details');
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-  appBar: AppBar(title: const Text('Product Details')),
-  body: FutureBuilder<Product>(
-    future: futureProduct,
-    builder: (context, snapshot) {
-      if (snapshot.connectionState == ConnectionState.waiting) {
-        return const CircularProgressIndicator();
-      } else if (snapshot.hasError) {
-        return Text("Error: ${snapshot.error}");
-      }
-      return Column(
-        children: [
-          Text('Product Name: ${snapshot.data?.name}'),
-          if (snapshot.data?.imageUrl != null)
-            Image.network(snapshot.data!.imageUrl),
-        ],
-      );
-    },
-  ),
-);
+      appBar: AppBar(
+        title: const Text('Product Details'),
+      ),
+      body: Center(
+        child: FutureBuilder<Product>(
+          future: futureProduct,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const CircularProgressIndicator();
+            } else if (snapshot.hasError) {
+              return Text('Error: ${snapshot.error}');
+            }
 
+            final product = snapshot.data!;
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Product Name: ${product.name}', style: TextStyle(fontSize: 24)),
+                  SizedBox(height: 10),
+                  Text('Seller Name: ${product.sellerName}', style: TextStyle(fontSize: 18)),
+                  SizedBox(height: 10),
+                  Text('Price: \$${product.price}', style: TextStyle(fontSize: 18)),
+                  SizedBox(height: 10),
+                  Text('Description:', style: TextStyle(fontSize: 18)),
+                  SizedBox(height: 5),
+                  Text(product.description, style: TextStyle(fontSize: 16)),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
   }
 }
 
 class Product {
   final String name;
-  final String imageUrl;
+  final String sellerName;
+  final double price;
+  final String description;
 
-  Product({required this.name, required this.imageUrl});
+  Product({
+    required this.name,
+    required this.sellerName,
+    required this.price,
+    required this.description,
+  });
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
-      name: json['name'],
-      imageUrl: json['image_url'],
+      name: json['product_name'] ?? '',
+      sellerName: json['seller_name'] ?? '',
+      price: double.parse(json['price'] ?? '0'),
+      description: json['product_description'] ?? '',
     );
   }
 }

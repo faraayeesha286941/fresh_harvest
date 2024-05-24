@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:fresh_harvest/appconfig/myconfig.dart';
+import 'productdetails.dart';  // Import the ProductDetails screen
 
 class BuyerTabScreen extends StatefulWidget {
   final String? searchQuery;
@@ -59,12 +60,22 @@ class _BuyerTabScreenState extends State<BuyerTabScreen> {
               itemCount: snapshot.data?.length ?? 0,
               itemBuilder: (context, index) {
                 var product = snapshot.data![index];
-                return Card(
-                  child: Column(
-                    children: <Widget>[
-                      Image.network(product.imageUrl),
-                      Text(product.name),
-                    ],
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProductDetails(productId: product.id),
+                      ),
+                    );
+                  },
+                  child: Card(
+                    child: Column(
+                      children: <Widget>[
+                        Image.network(product.imageUrl),
+                        Text(product.name),
+                      ],
+                    ),
                   ),
                 );
               },
@@ -77,15 +88,17 @@ class _BuyerTabScreenState extends State<BuyerTabScreen> {
 }
 
 class Product {
+  final String id;
   final String name;
   final String imageUrl;
 
-  Product({required this.name, required this.imageUrl});
+  Product({required this.id, required this.name, required this.imageUrl});
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
-      name: json['name'],
-      imageUrl: json['image_url'],
+      id: json['product_id'] ?? '',
+      name: json['name'] ?? '',
+      imageUrl: json['image_url'] ?? '',
     );
   }
 }
