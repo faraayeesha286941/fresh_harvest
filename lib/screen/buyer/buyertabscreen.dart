@@ -23,9 +23,7 @@ class _BuyerTabScreenState extends State<BuyerTabScreen> {
 
   Future<List<Product>> fetchProducts(String? query) async {
     final serverUrl = MyConfig().SERVER;
-    final response = await http.get(
-      Uri.parse('$serverUrl/fresh_harvest/php/getlatestproducts.php?server_url=$serverUrl&query=${query ?? ''}')
-    );
+    final response = await http.get(Uri.parse('$serverUrl/fresh_harvest/php/getlatestproducts.php?server_url=$serverUrl&query=${query ?? ''}'));
 
     if (response.statusCode == 200) {
       List<dynamic> productsJson = jsonDecode(response.body);
