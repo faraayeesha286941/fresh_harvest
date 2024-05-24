@@ -6,7 +6,6 @@ import 'package:fresh_harvest/appconfig/myconfig.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fresh_harvest/screen/mainscreen.dart';
 
-
 void main() {
   runApp(const MaterialApp(
     home: LoginPage(),
@@ -25,38 +24,38 @@ class _LoginPageState extends State<LoginPage> {
   TextEditingController passwordController = TextEditingController();
 
   void loginUser() async {
-  final response = await http.post(
-    Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/login_user.php'),
-    body: {
-      'login': loginController.text,
-      'password': passwordController.text,
-    },
-  );
+    final response = await http.post(
+      Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/login_user.php'),
+      body: {
+        'login': loginController.text,
+        'password': passwordController.text,
+      },
+    );
 
-  if (response.statusCode == 200) {
-    var jsonResponse = response.body;
-    print(jsonResponse);
-    if (jsonResponse.startsWith('success')) {
-      jsonResponse = jsonResponse.substring('success'.length);
-      var data = json.decode(jsonResponse);
-      // Save user data here
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setString('userEmail', data['email']);
-      await prefs.setString('userPassword', data['password']);
-      await prefs.setBool('isLoggedIn', true);  // Set the isLoggedIn flag
+    if (response.statusCode == 200) {
+      var jsonResponse = response.body;
+      print(jsonResponse);
+      if (jsonResponse.startsWith('success')) {
+        jsonResponse = jsonResponse.substring('success'.length);
+        var data = json.decode(jsonResponse);
+        // Save user data here
+        final SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('userEmail', data['email']);
+        await prefs.setString('userPassword', passwordController.text);
+        await prefs.setBool('isLoggedIn', true);  // Set the isLoggedIn flag
 
-      // Navigate to MainScreen after successful login
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => MainScreen()),
-      );
+        // Navigate to MainScreen after successful login
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+        );
+      } else {
+        Fluttertoast.showToast(msg: 'Error logging in');
+      }
     } else {
-      Fluttertoast.showToast(msg: 'Error logging in');
+      Fluttertoast.showToast(msg: 'Failed to connect to the server');
     }
-  } else {
-    Fluttertoast.showToast(msg: 'Failed to connect to the server');
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -98,6 +97,7 @@ class _LoginPageState extends State<LoginPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: TextField(
                   controller: passwordController,
+                  obscureText: true, // Hide password
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     hintText: '',

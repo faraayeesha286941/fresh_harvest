@@ -15,6 +15,7 @@ class _UserProfileState extends State<UserProfile> {
   String firstName = '';
   String lastName = '';
   String email = '';
+  bool loading = true;
 
   @override
   void initState() {
@@ -27,7 +28,7 @@ class _UserProfileState extends State<UserProfile> {
     String? userEmail = prefs.getString('userEmail');
 
     if (userEmail != null) {
-      var url = Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/userregistration.php');
+      var url = Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/userprofile.php');
       var response = await http.post(url, body: {
         'email': userEmail,  // Include the email parameter in the request
       });
@@ -43,18 +44,28 @@ class _UserProfileState extends State<UserProfile> {
               firstName = data['first_name'];
               lastName = data['last_name'];
               email = data['email'];
+              loading = false;
             });
           }
         } else {
           print(jsonResponse);
+          setState(() {
+            loading = false;
+          });
         }
       } else {
         // Handle other status codes or errors
         print('Server error: ${response.statusCode}');
+        setState(() {
+          loading = false;
+        });
       }
     } else {
       print('Email not found in SharedPreferences');
       // Perhaps navigate to login screen or show an error message
+      setState(() {
+        loading = false;
+      });
     }
   }
 
@@ -64,38 +75,40 @@ class _UserProfileState extends State<UserProfile> {
       appBar: AppBar(
         title: const Text('User Profile'),
       ),
-      body: Center(  // Center the content
-        child: SingleChildScrollView(  // Ensures content is scrollable
-          padding: const EdgeInsets.all(16.0),  // Add padding around content
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,  // Center the column content vertically
-            crossAxisAlignment: CrossAxisAlignment.center,  // Center the column content horizontally
-            children: <Widget>[
-              const CircleAvatar(
-                radius: 50,
-                backgroundImage: AssetImage('assets/user_avatar.png'),
+      body: Center(
+        child: loading
+            ? CircularProgressIndicator()
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    const CircleAvatar(
+                      radius: 50,
+                      backgroundImage: AssetImage('assets/user_avatar.png'),
+                    ),
+                    const SizedBox(height: 20),
+                    Text('First Name: $firstName'),
+                    Text('Last Name: $lastName'),
+                    Text('Email: $email'),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/editprofile.dart');
+                      },
+                      child: const Text('Edit Profile'),
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/sellerregistration.dart');
+                      },
+                      child: const Text('Want to become a seller?'),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 20),
-              Text('First Name: $firstName'),
-              Text('Last Name: $lastName'),
-              Text('Email: $email'),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/editprofile.dart');
-                },
-                child: const Text('Edit Profile'),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/sellerregistration.dart');
-                },
-                child: const Text('Want to become a seller?'),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
