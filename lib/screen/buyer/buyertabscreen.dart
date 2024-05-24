@@ -4,7 +4,9 @@ import 'package:http/http.dart' as http;
 import 'package:fresh_harvest/appconfig/myconfig.dart';
 
 class BuyerTabScreen extends StatefulWidget {
-  const BuyerTabScreen({super.key});
+  final String? searchQuery;
+
+  const BuyerTabScreen({Key? key, this.searchQuery}) : super(key: key);
 
   @override
   _BuyerTabScreenState createState() => _BuyerTabScreenState();
@@ -16,11 +18,14 @@ class _BuyerTabScreenState extends State<BuyerTabScreen> {
   @override
   void initState() {
     super.initState();
-    futureProducts = fetchProducts();
+    futureProducts = fetchProducts(widget.searchQuery);
   }
 
-  Future<List<Product>> fetchProducts() async {
-    final response = await http.get(Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/getlatestproducts.php?server_url=${MyConfig().SERVER}'));
+  Future<List<Product>> fetchProducts(String? query) async {
+    final serverUrl = MyConfig().SERVER;
+    final response = await http.get(
+      Uri.parse('$serverUrl/fresh_harvest/php/getlatestproducts.php?server_url=$serverUrl&query=${query ?? ''}')
+    );
 
     if (response.statusCode == 200) {
       List<dynamic> productsJson = jsonDecode(response.body);
@@ -44,6 +49,8 @@ class _BuyerTabScreenState extends State<BuyerTabScreen> {
               return const CircularProgressIndicator();
             } else if (snapshot.hasError) {
               return Text('Error: ${snapshot.error}');
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Text('No products found');
             }
 
             return GridView.builder(

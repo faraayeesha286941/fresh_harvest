@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:fresh_harvest/appconfig/myconfig.dart';
+import 'package:fresh_harvest/screen/buyer/buyertabscreen.dart'; // Import the BuyerTabScreen
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
@@ -13,6 +14,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   late Future<List<Product>> futureProducts;
+  final TextEditingController searchController = TextEditingController();
 
   @override
   void initState() {
@@ -27,7 +29,7 @@ class _MainScreenState extends State<MainScreen> {
     if (response.statusCode == 200) {
       print(response.body);
       List<dynamic> productsJson = jsonDecode(response.body);
-      return productsJson.map((json) => Product.fromJson(json, serverUrl)).toList();
+      return productsJson.map((json) => Product.fromJson(json)).toList();
     } else {
       throw Exception('Failed to load products');
     }
@@ -37,6 +39,16 @@ class _MainScreenState extends State<MainScreen> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     Navigator.of(context).pushReplacementNamed('/login');
+  }
+
+  void searchProducts() {
+    final searchQuery = searchController.text;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BuyerTabScreen(searchQuery: searchQuery),
+      ),
+    );
   }
 
   @override
@@ -55,12 +67,20 @@ class _MainScreenState extends State<MainScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            const Padding(
-              padding: EdgeInsets.all(8.0),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
               child: Row(
                 children: [
-                  Expanded(child: TextField(decoration: InputDecoration(hintText: 'Search'))),
-                  IconButton(icon: const Icon(Icons.settings), onPressed: null)
+                  Expanded(
+                    child: TextField(
+                      controller: searchController,
+                      decoration: const InputDecoration(hintText: 'Search'),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.search),
+                    onPressed: searchProducts,  // Call the search function
+                  ),
                 ],
               ),
             ),
@@ -130,7 +150,7 @@ class Product {
 
   Product({required this.name, required this.imageUrl});
 
-  factory Product.fromJson(Map<String, dynamic> json, String serverUrl) {
+  factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
       name: json['name'],
       imageUrl: json['image_url'],
