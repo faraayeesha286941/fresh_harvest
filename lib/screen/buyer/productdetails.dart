@@ -44,6 +44,7 @@ class _ProductDetailsState extends State<ProductDetails> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Product Details'),
+        backgroundColor: Colors.green,
       ),
       body: Center(
         child: FutureBuilder<Product>(
@@ -58,19 +59,70 @@ class _ProductDetailsState extends State<ProductDetails> {
             final product = snapshot.data!;
             return Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Product Name: ${product.name}', style: TextStyle(fontSize: 24)),
-                  SizedBox(height: 10),
-                  Text('Seller Name: ${product.sellerName}', style: TextStyle(fontSize: 18)),
-                  SizedBox(height: 10),
-                  Text('Price: \$${product.price}', style: TextStyle(fontSize: 18)),
-                  SizedBox(height: 10),
-                  Text('Description:', style: TextStyle(fontSize: 18)),
-                  SizedBox(height: 5),
-                  Text(product.description, style: TextStyle(fontSize: 16)),
-                ],
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Card(
+                        elevation: 5,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                product.name,
+                                style: TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green,
+                                ),
+                              ),
+                              SizedBox(height: 20),
+                              Text(
+                                'Seller: ${product.sellerName}',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  color: Colors.grey[700],
+                                ),
+                              ),
+                              SizedBox(height: 10),
+                              Text(
+                                '\$${product.price}',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    Text(
+                      'Description',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      product.description,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },
