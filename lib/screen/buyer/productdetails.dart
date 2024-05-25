@@ -44,7 +44,7 @@ class _ProductDetailsState extends State<ProductDetails> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Product Details'),
-        backgroundColor: Colors.green,
+        backgroundColor: Colors.blue,
       ),
       body: Center(
         child: FutureBuilder<Product>(
@@ -79,7 +79,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                                 style: TextStyle(
                                   fontSize: 28,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.green,
+                                  color: Colors.blue,
                                 ),
                               ),
                               SizedBox(height: 20),
@@ -110,7 +110,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: Colors.green,
+                        color: Colors.blue,
                       ),
                     ),
                     SizedBox(height: 10),
@@ -119,6 +119,23 @@ class _ProductDetailsState extends State<ProductDetails> {
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.grey[800],
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    Center(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          // Handle add to cart action here
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Added to cart')),
+                          );
+                        },
+                        icon: Icon(Icons.add_shopping_cart),
+                        label: Text('Add To Cart'),
+                        style: ElevatedButton.styleFrom(
+                          foregroundColor: Colors.white, backgroundColor: Colors.blue, // Text color
+                          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        ),
                       ),
                     ),
                   ],
