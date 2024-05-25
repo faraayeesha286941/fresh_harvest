@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fresh_harvest/appconfig/myconfig.dart';
 
 class ProductDetails extends StatefulWidget {
@@ -14,6 +15,7 @@ class ProductDetails extends StatefulWidget {
 
 class _ProductDetailsState extends State<ProductDetails> {
   late Future<Product> futureProduct;
+  int quantity = 1;
 
   @override
   void initState() {
@@ -22,7 +24,7 @@ class _ProductDetailsState extends State<ProductDetails> {
   }
 
   Future<Product> fetchProductDetails(String productId) async {
-    final response = await http.get(Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/getproductdetails.php?product_id=$productId'));
+    final response = await http.get(Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/getproductdetails.php?product_id=$productId&server_url=${MyConfig().SERVER}'));
 
     // Print the response body for debugging
     print('Response body: ${response.body}');
@@ -36,6 +38,39 @@ class _ProductDetailsState extends State<ProductDetails> {
       }
     } else {
       throw Exception('Failed to load product details');
+    }
+  }
+
+  void addToCart(String productId, int quantity) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    // Assuming user ID is stored in SharedPreferences
+    String userId = prefs.getString('userId') ?? '';
+
+    // Print values for debugging
+    print('user_id: $userId');
+    print('product_id: $productId');
+    print('quantity: $quantity');
+
+    final response = await http.post(
+      Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/addtocart.php'),
+      body: {
+        'user_id': userId,
+        'product_id': productId,
+        'quantity': quantity.toString(),
+      },
+    );
+
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}'); // Print the response body
+
+    if (response.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Added to cart')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to add to cart')),
+      );
     }
   }
 
@@ -74,6 +109,13 @@ class _ProductDetailsState extends State<ProductDetails> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
+                              // Display product image
+                              Image.network(
+                                product.imageUrl,
+                                height: 200,
+                                fit: BoxFit.cover,
+                              ),
+                              SizedBox(height: 20),
                               Text(
                                 product.name,
                                 style: TextStyle(
@@ -122,14 +164,36 @@ class _ProductDetailsState extends State<ProductDetails> {
                       ),
                     ),
                     SizedBox(height: 20),
+                    // Quantity selector
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.remove),
+                          onPressed: () {
+                            setState(() {
+                              if (quantity > 1) quantity--;
+                            });
+                          },
+                        ),
+                        Text(
+                          '$quantity',
+                          style: TextStyle(fontSize: 20),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.add),
+                          onPressed: () {
+                            setState(() {
+                              quantity++;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 20),
                     Center(
                       child: ElevatedButton.icon(
-                        onPressed: () {
-                          // Handle add to cart action here
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Added to cart')),
-                          );
-                        },
+                        onPressed: () => addToCart(widget.productId, quantity),
                         icon: Icon(Icons.add_shopping_cart),
                         label: Text('Add To Cart'),
                         style: ElevatedButton.styleFrom(
@@ -150,24 +214,30 @@ class _ProductDetailsState extends State<ProductDetails> {
 }
 
 class Product {
+  final String id;
   final String name;
   final String sellerName;
   final double price;
   final String description;
+  final String imageUrl; // Add image URL field
 
   Product({
+    required this.id,
     required this.name,
     required this.sellerName,
     required this.price,
     required this.description,
+    required this.imageUrl,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
+      id: json['product_id'] ?? '',
       name: json['product_name'] ?? '',
       sellerName: json['seller_name'] ?? '',
       price: double.parse(json['price'] ?? '0'),
       description: json['product_description'] ?? '',
+      imageUrl: json['image_url'] ?? '', // Parse image URL from JSON
     );
   }
 }
