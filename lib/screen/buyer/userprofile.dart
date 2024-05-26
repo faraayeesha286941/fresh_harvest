@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:fresh_harvest/appconfig/myconfig.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'upload_documents.dart'; // Import the new page
+import 'purchases_screen.dart'; // Import PurchasesScreen
 
 class UserProfile extends StatefulWidget {
   const UserProfile({super.key});
@@ -109,6 +110,16 @@ class _UserProfileState extends State<UserProfile> {
                         );
                       },
                       child: const Text('Want to become a seller?'),
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => PurchasesScreen()),
+                        );
+                      },
+                      child: const Text('My Purchases'),
                     ),
                   ],
                 ),
