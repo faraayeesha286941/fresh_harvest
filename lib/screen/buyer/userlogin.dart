@@ -35,13 +35,19 @@ class _LoginPageState extends State<LoginPage> {
     if (response.statusCode == 200) {
       var jsonResponse = response.body;
       print(jsonResponse);
-      if (jsonResponse.startsWith('success')) {
-        jsonResponse = jsonResponse.substring('success'.length);
-        var data = json.decode(jsonResponse);
+
+      // Check if the response contains "success" and then parse the JSON
+      if (jsonResponse.contains('success')) {
+        jsonResponse = jsonResponse.replaceFirst('{"message":"success",', '');
+        jsonResponse = '{' + jsonResponse; // Re-add the opening brace
+
+        var data = jsonDecode(jsonResponse); // Decode JSON response
+
         // Save user data here
         final SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setString('userEmail', data['email']);
         await prefs.setString('userPassword', passwordController.text);
+        await prefs.setString('userId', data['user_id']); // Store user_id
         await prefs.setBool('isLoggedIn', true);  // Set the isLoggedIn flag
 
         // Navigate to MainScreen after successful login
@@ -50,7 +56,8 @@ class _LoginPageState extends State<LoginPage> {
           MaterialPageRoute(builder: (context) => const MainScreen()),
         );
       } else {
-        Fluttertoast.showToast(msg: 'Error logging in');
+        // Show error message in case of any issue
+        Fluttertoast.showToast(msg: jsonDecode(jsonResponse)['message']);
       }
     } else {
       Fluttertoast.showToast(msg: 'Failed to connect to the server');

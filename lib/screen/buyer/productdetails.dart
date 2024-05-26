@@ -43,8 +43,9 @@ class _ProductDetailsState extends State<ProductDetails> {
 
   void addToCart(String productId, int quantity) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    // Assuming user ID is stored in SharedPreferences
+    // Print to verify retrieval
     String userId = prefs.getString('userId') ?? '';
+    print('Retrieved user_id: $userId');
 
     // Print values for debugging
     print('user_id: $userId');
