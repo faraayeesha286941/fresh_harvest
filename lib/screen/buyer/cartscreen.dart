@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fresh_harvest/appconfig/myconfig.dart';
-import 'package:fresh_harvest/screen/buyer/checkout_screen.dart';
+import 'checkout_screen.dart';
 
 class CartScreen extends StatefulWidget {
   final Key? key;
@@ -61,8 +61,14 @@ class _CartScreenState extends State<CartScreen> {
   void _checkout() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => CheckoutScreen()),
+      MaterialPageRoute(builder: (context) => CheckoutScreen(onCheckoutComplete: _refreshCart)),
     );
+  }
+
+  void _refreshCart() {
+    setState(() {
+      futureCartItems = fetchCartItems();
+    });
   }
 
   @override
