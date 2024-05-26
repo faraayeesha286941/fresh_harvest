@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'mainscreen.dart';
 import 'package:fresh_harvest/screen/buyer/userprofile.dart'; // Import UserProfile page
 import 'package:fresh_harvest/screen/buyer/cartscreen.dart'; // Import CartScreen
+import 'package:fresh_harvest/screen/shared/messaging.dart'; // Import ChatPage
 
 class PersistentBottomNav extends StatefulWidget {
   const PersistentBottomNav({super.key});
@@ -58,7 +59,7 @@ class _PersistentBottomNavState extends State<PersistentBottomNav> {
                       );
                     case 2:
                       return MaterialPageRoute(
-                        builder: (BuildContext context) => PlaceholderScreen(title: 'My Mail'),
+                        builder: (BuildContext context) => ChatPage(userId: '1', receiverId: '2'), // Example userId and receiverId
                       );
                     case 3:
                       return MaterialPageRoute(
@@ -82,7 +83,7 @@ class _PersistentBottomNavState extends State<PersistentBottomNav> {
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
             BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'My Cart'),
-            BottomNavigationBarItem(icon: Icon(Icons.mail), label: 'My Mail'),
+            BottomNavigationBarItem(icon: Icon(Icons.mail), label: 'Messages'), // Changed label to Messages
             BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           ],
         ),
@@ -91,7 +92,7 @@ class _PersistentBottomNavState extends State<PersistentBottomNav> {
   }
 }
 
-// Placeholder Screen
+// Placeholder Screen remains the same
 class PlaceholderScreen extends StatelessWidget {
   final String title;
   const PlaceholderScreen({Key? key, required this.title}) : super(key: key);
