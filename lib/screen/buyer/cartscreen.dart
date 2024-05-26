@@ -32,6 +32,28 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
+  Future<void> updateCartQuantity(String cartId, int quantity) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String userId = prefs.getString('userId') ?? '';
+
+    final response = await http.post(
+      Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/updatecartquantity.php'),
+      body: {
+        'user_id': userId,
+        'cart_id': cartId,
+        'quantity': quantity.toString(),
+      },
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        futureCartItems = fetchCartItems();
+      });
+    } else {
+      throw Exception('Failed to update cart quantity');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -68,7 +90,25 @@ class _CartScreenState extends State<CartScreen> {
                       },
                     ),
                     title: Text(item.productName),
-                    subtitle: Text('Quantity: ${item.quantity}'),
+                    subtitle: Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.remove),
+                          onPressed: () {
+                            if (item.quantity > 1) {
+                              updateCartQuantity(item.cartId, item.quantity - 1);
+                            }
+                          },
+                        ),
+                        Text('${item.quantity}'),
+                        IconButton(
+                          icon: Icon(Icons.add),
+                          onPressed: () {
+                            updateCartQuantity(item.cartId, item.quantity + 1);
+                          },
+                        ),
+                      ],
+                    ),
                     trailing: Text('\$${item.price.toStringAsFixed(2)}'),
                   ),
                 );
