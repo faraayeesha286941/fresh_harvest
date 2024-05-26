@@ -8,18 +8,18 @@ class CheckoutScreen extends StatelessWidget {
 
   CheckoutScreen({required this.onCheckoutComplete});
 
-  Future<void> _clearCart(BuildContext context) async {
+  Future<void> _clearCartAndAddToOrders(BuildContext context) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String userId = prefs.getString('userId') ?? '';
 
     final response = await http.post(
-      Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/clearcart.php'),
+      Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/add_to_orders.php'),
       body: {'user_id': userId},
     );
 
     if (response.statusCode == 200) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Payment successful and cart cleared')),
+        SnackBar(content: Text('Payment successful and order placed')),
       );
 
       // Call the callback to refresh the cart
@@ -29,7 +29,7 @@ class CheckoutScreen extends StatelessWidget {
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to clear cart')),
+        SnackBar(content: Text('Failed to place order')),
       );
     }
   }
@@ -48,7 +48,7 @@ class CheckoutScreen extends StatelessWidget {
             Image.asset('assets/QR.jpg'), // Ensure QR.jpg is in the assets folder and listed in pubspec.yaml
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () => _clearCart(context),
+              onPressed: () => _clearCartAndAddToOrders(context),
               child: const Text('Paid'),
             ),
           ],
