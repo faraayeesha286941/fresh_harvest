@@ -13,6 +13,8 @@ class PersistentBottomNav extends StatefulWidget {
 
 class _PersistentBottomNavState extends State<PersistentBottomNav> {
   int _selectedIndex = 0;
+  UniqueKey cartScreenKey = UniqueKey(); // Add a key for CartScreen
+
   final List<GlobalKey<NavigatorState>> _navigatorKeys = [
     GlobalKey<NavigatorState>(),
     GlobalKey<NavigatorState>(),
@@ -22,6 +24,9 @@ class _PersistentBottomNavState extends State<PersistentBottomNav> {
 
   void _onItemTapped(int index) {
     setState(() {
+      if (index == 1) {
+        cartScreenKey = UniqueKey(); // Update the key to force refresh
+      }
       _selectedIndex = index;
     });
   }
@@ -55,7 +60,7 @@ class _PersistentBottomNavState extends State<PersistentBottomNav> {
                       );
                     case 1:
                       return MaterialPageRoute(
-                        builder: (BuildContext context) => CartScreen(),
+                        builder: (BuildContext context) => CartScreen(key: cartScreenKey),
                       );
                     case 2:
                       return MaterialPageRoute(
@@ -83,7 +88,7 @@ class _PersistentBottomNavState extends State<PersistentBottomNav> {
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
             BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'My Cart'),
-            BottomNavigationBarItem(icon: Icon(Icons.mail), label: 'Messages'), // Changed label to Messages
+            BottomNavigationBarItem(icon: Icon(Icons.mail), label: 'Messages'),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           ],
         ),

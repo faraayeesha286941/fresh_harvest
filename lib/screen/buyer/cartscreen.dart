@@ -6,6 +6,9 @@ import 'package:fresh_harvest/appconfig/myconfig.dart';
 import 'package:fresh_harvest/screen/buyer/checkout_screen.dart';
 
 class CartScreen extends StatefulWidget {
+  final Key? key;
+  CartScreen({this.key}) : super(key: key); // Accept key parameter
+
   @override
   _CartScreenState createState() => _CartScreenState();
 }
@@ -55,18 +58,11 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
-  void _checkout() async {
-    final result = await Navigator.push(
+  void _checkout() {
+    Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => CheckoutScreen()),
     );
-
-    if (result == true) {
-      // Refresh cart items if checkout was successful
-      setState(() {
-        futureCartItems = fetchCartItems();
-      });
-    }
   }
 
   @override
