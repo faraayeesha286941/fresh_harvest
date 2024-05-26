@@ -22,7 +22,7 @@ class _CartScreenState extends State<CartScreen> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String userId = prefs.getString('userId') ?? '';
 
-    final response = await http.get(Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/getcartitems.php?user_id=$userId'));
+    final response = await http.get(Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/getcartitems.php?user_id=$userId&server_url=${MyConfig().SERVER}'));
 
     if (response.statusCode == 200) {
       List<dynamic> cartJson = jsonDecode(response.body);
@@ -61,7 +61,12 @@ class _CartScreenState extends State<CartScreen> {
                 var item = cartItems[index];
                 return Card(
                   child: ListTile(
-                    leading: Image.network(item.imageUrl),
+                    leading: Image.network(
+                      item.imageUrl,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Icon(Icons.error); // Handle image error
+                      },
+                    ),
                     title: Text(item.productName),
                     subtitle: Text('Quantity: ${item.quantity}'),
                     trailing: Text('\$${item.price.toStringAsFixed(2)}'),

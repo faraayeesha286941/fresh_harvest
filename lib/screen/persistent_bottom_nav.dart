@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'mainscreen.dart';
 import 'package:fresh_harvest/screen/buyer/userprofile.dart'; // Import UserProfile page
+import 'package:fresh_harvest/screen/buyer/cartscreen.dart'; // Import CartScreen
 
 class PersistentBottomNav extends StatefulWidget {
   const PersistentBottomNav({super.key});
@@ -12,6 +13,8 @@ class PersistentBottomNav extends StatefulWidget {
 class _PersistentBottomNavState extends State<PersistentBottomNav> {
   int _selectedIndex = 0;
   final List<GlobalKey<NavigatorState>> _navigatorKeys = [
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
     GlobalKey<NavigatorState>(),
     GlobalKey<NavigatorState>(),
   ];
@@ -44,9 +47,28 @@ class _PersistentBottomNavState extends State<PersistentBottomNav> {
               child: Navigator(
                 key: navigatorKey,
                 onGenerateRoute: (routeSettings) {
-                  return MaterialPageRoute(
-                    builder: (BuildContext context) => index == 0 ? const MainScreen() : const UserProfile(),
-                  );
+                  switch (index) {
+                    case 0:
+                      return MaterialPageRoute(
+                        builder: (BuildContext context) => const MainScreen(),
+                      );
+                    case 1:
+                      return MaterialPageRoute(
+                        builder: (BuildContext context) => CartScreen(),
+                      );
+                    case 2:
+                      return MaterialPageRoute(
+                        builder: (BuildContext context) => PlaceholderScreen(title: 'My Mail'),
+                      );
+                    case 3:
+                      return MaterialPageRoute(
+                        builder: (BuildContext context) => const UserProfile(),
+                      );
+                    default:
+                      return MaterialPageRoute(
+                        builder: (BuildContext context) => const MainScreen(),
+                      );
+                  }
                 },
               ),
             );
@@ -64,6 +86,25 @@ class _PersistentBottomNavState extends State<PersistentBottomNav> {
             BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// Placeholder Screen
+class PlaceholderScreen extends StatelessWidget {
+  final String title;
+  const PlaceholderScreen({Key? key, required this.title}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title),
+        backgroundColor: Colors.blue,
+      ),
+      body: Center(
+        child: Text('This is the $title screen'),
       ),
     );
   }
