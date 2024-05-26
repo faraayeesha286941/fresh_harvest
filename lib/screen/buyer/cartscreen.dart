@@ -55,11 +55,18 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
-  void _checkout() {
-    Navigator.push(
+  void _checkout() async {
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => CheckoutScreen()),
     );
+
+    if (result == true) {
+      // Refresh cart items if checkout was successful
+      setState(() {
+        futureCartItems = fetchCartItems();
+      });
+    }
   }
 
   @override
