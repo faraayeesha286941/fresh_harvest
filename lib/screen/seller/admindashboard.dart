@@ -8,7 +8,28 @@ class AdminDashboard extends StatelessWidget {
         title: Text('Admin Dashboard'),
       ),
       body: Center(
-        child: Text('Welcome to the Admin Dashboard!'),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            ElevatedButton.icon(
+              icon: Icon(Icons.shopping_cart),
+              label: Text('Products'),
+              onPressed: () {
+                // Navigate to Products screen or perform appropriate action
+                // Navigator.pushNamed(context, '/adminProducts');
+              },
+            ),
+            SizedBox(height: 20),
+            ElevatedButton.icon(
+              icon: Icon(Icons.receipt),
+              label: Text('Orders'),
+              onPressed: () {
+                // Navigate to Orders screen or perform appropriate action
+                // Navigator.pushNamed(context, '/adminOrders');
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
