@@ -5,6 +5,9 @@ import 'package:fresh_harvest/appconfig/myconfig.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'upload_documents.dart'; // Import the new page
 import 'purchases_screen.dart'; // Import PurchasesScreen
+import 'package:fresh_harvest/screen/shared/edit_profile_screen.dart'; // Import EditProfileScreen
+import 'package:fresh_harvest/screen/seller/seller_dashboard.dart'; // Import SellerDashboard
+import 'package:fresh_harvest/screen/persistent_bottom_nav.dart'; // Import PersistentBottomNav
 
 class UserProfile extends StatefulWidget {
   const UserProfile({super.key});
@@ -17,6 +20,7 @@ class _UserProfileState extends State<UserProfile> {
   String firstName = '';
   String lastName = '';
   String email = '';
+  String accountType = '';
   bool loading = true;
 
   @override
@@ -38,37 +42,49 @@ class _UserProfileState extends State<UserProfile> {
       if (response.statusCode == 200) {
         var jsonResponse = response.body;
         print(jsonResponse);
-        if (!jsonResponse.contains("Email parameter missing") && !jsonResponse.contains("User not found")) {
-          if (jsonResponse.startsWith('success')) {
-            jsonResponse = jsonResponse.substring('success'.length);
-            var data = json.decode(jsonResponse);
-            setState(() {
-              firstName = data['first_name'];
-              lastName = data['last_name'];
-              email = data['email'];
-              loading = false;
-            });
-          }
+        if (jsonResponse.startsWith('success')) {
+          jsonResponse = jsonResponse.substring('success'.length);
+          var data = json.decode(jsonResponse);
+          setState(() {
+            firstName = data['first_name'];
+            lastName = data['last_name'];
+            email = data['email'];
+            accountType = data['account_type'];
+            loading = false;
+          });
         } else {
-          print(jsonResponse);
           setState(() {
             loading = false;
           });
         }
       } else {
-        // Handle other status codes or errors
-        print('Server error: ${response.statusCode}');
         setState(() {
           loading = false;
         });
       }
     } else {
-      print('Email not found in SharedPreferences');
-      // Perhaps navigate to login screen or show an error message
       setState(() {
         loading = false;
       });
     }
+  }
+
+  void _switchToSellerInterface() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('currentInterface', 'seller');
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => SellerDashboard()),
+    );
+  }
+
+  void _switchToBuyerInterface() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('currentInterface', 'buyer');
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => PersistentBottomNav()),
+    );
   }
 
   @override
@@ -97,7 +113,10 @@ class _UserProfileState extends State<UserProfile> {
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: () {
-                        Navigator.pushNamed(context, '/editprofile.dart');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => EditProfileScreen()),
+                        );
                       },
                       child: const Text('Edit Profile'),
                     ),
@@ -121,6 +140,17 @@ class _UserProfileState extends State<UserProfile> {
                       },
                       child: const Text('My Purchases'),
                     ),
+                    const SizedBox(height: 20),
+                    if (accountType == 'Seller') ...[
+                      ElevatedButton(
+                        onPressed: _switchToSellerInterface,
+                        child: const Text('Switch to Seller Interface'),
+                      ),
+                      ElevatedButton(
+                        onPressed: _switchToBuyerInterface,
+                        child: const Text('Switch to Buyer Interface'),
+                      ),
+                    ],
                   ],
                 ),
               ),

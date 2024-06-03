@@ -48,6 +48,7 @@ class _LoginPageState extends State<LoginPage> {
         await prefs.setString('userEmail', data['email']);
         await prefs.setString('userPassword', passwordController.text);
         await prefs.setString('userId', data['user_id']); // Store user_id
+        await prefs.setString('accountType', data['account_type']); // Store account_type
         await prefs.setBool('isLoggedIn', true);  // Set the isLoggedIn flag
 
         // Navigate to MainScreen after successful login
