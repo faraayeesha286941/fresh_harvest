@@ -7,7 +7,8 @@ import 'package:fresh_harvest/screen/seller/seller_dashboard.dart';
 import 'package:fresh_harvest/screen/seller/my_products_screen.dart';
 import 'package:fresh_harvest/screen/seller/ongoing_orders_screen.dart';
 import 'package:fresh_harvest/screen/seller/past_orders_screen.dart';
-import 'package:fresh_harvest/screen/seller/admindashboard.dart';  // Import AdminDashboard
+import 'package:fresh_harvest/screen/seller/admindashboard.dart'; // Import AdminDashboard
+import 'package:fresh_harvest/screen/seller/productview.dart'; // Import ProductView
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,6 +37,7 @@ class MyApp extends StatelessWidget {
         '/ongoingOrders': (context) => OngoingOrdersScreen(),
         '/pastOrders': (context) => PastOrdersScreen(),
         '/adminDashboard': (context) => AdminDashboard(), // Add AdminDashboard route
+        '/productView': (context) => ProductView(), // Add ProductView route
       },
     );
   }

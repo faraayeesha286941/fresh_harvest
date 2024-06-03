@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fresh_harvest/screen/seller/productview.dart'; // Import the ProductView screen
 
 class AdminDashboard extends StatelessWidget {
   @override
@@ -15,8 +16,11 @@ class AdminDashboard extends StatelessWidget {
               icon: Icon(Icons.shopping_cart),
               label: Text('Products'),
               onPressed: () {
-                // Navigate to Products screen or perform appropriate action
-                // Navigator.pushNamed(context, '/adminProducts');
+                // Navigate to ProductView screen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ProductView()),
+                );
               },
             ),
             SizedBox(height: 20),
