@@ -164,7 +164,7 @@ class _MainScreenState extends State<MainScreen> {
                                       style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                                     ),
                                     Text(
-                                      '\RM${product.price}',
+                                      '\RM${product.price.toStringAsFixed(2)}',  // Format price to two decimal places
                                       style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                                     ),
                                   ],

@@ -135,7 +135,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                               ),
                               SizedBox(height: 10),
                               Text(
-                                '\RM${product.price}',
+                                '\RM${product.price.toStringAsFixed(2)}',
                                 style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
