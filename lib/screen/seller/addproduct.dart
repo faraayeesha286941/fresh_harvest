@@ -14,8 +14,10 @@ class AddProduct extends StatefulWidget {
 class _AddProductState extends State<AddProduct> {
   TextEditingController productNameController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
+  TextEditingController priceController = TextEditingController();
   TextEditingController amountController = TextEditingController();
   TextEditingController locationController = TextEditingController();
+  String _selectedCategory = 'Fruits';
   File? _image;
 
   final picker = ImagePicker();
@@ -44,10 +46,14 @@ class _AddProductState extends State<AddProduct> {
     );
     request.fields['product_name'] = productNameController.text;
     request.fields['product_description'] = descriptionController.text;
-    request.fields['amount'] = amountController.text;
+    request.fields['price'] = priceController.text;
+    request.fields['category'] = _selectedCategory;
     request.fields['location'] = locationController.text;
+    request.fields['amount'] = amountController.text;
     request.fields['seller_id'] = '1'; // Replace with actual seller ID
     request.files.add(await http.MultipartFile.fromPath('image', _image!.path));
+
+    print('Sending request with fields: ${request.fields}'); // Debugging print
 
     var response = await request.send();
 
@@ -83,6 +89,34 @@ class _AddProductState extends State<AddProduct> {
             TextField(
               controller: descriptionController,
               decoration: InputDecoration(labelText: 'Description'),
+            ),
+            TextField(
+              controller: priceController,
+              decoration: InputDecoration(labelText: 'Price'),
+              keyboardType: TextInputType.number,
+            ),
+            Row(
+              children: [
+                Text('Category', style: TextStyle(fontSize: 16)),
+                SizedBox(width: 16), // Add some space between the text and dropdown
+                Expanded(
+                  child: DropdownButton<String>(
+                    value: _selectedCategory,
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedCategory = newValue!;
+                      });
+                    },
+                    items: <String>['Fruits', 'Vegetables']
+                        .map<DropdownMenuItem<String>>((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
             ),
             TextField(
               controller: amountController,
