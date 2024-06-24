@@ -121,7 +121,7 @@ class _MainScreenState extends State<MainScreen> {
                   return GridView.builder(
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
-                      childAspectRatio: 4 / 3,
+                      childAspectRatio: 4 / 5,
                     ),
                     itemCount: snapshot.data?.length ?? 0,
                     itemBuilder: (context, index) {
@@ -136,10 +136,40 @@ class _MainScreenState extends State<MainScreen> {
                           );
                         },
                         child: Card(
+                          margin: EdgeInsets.all(8.0),
                           child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: <Widget>[
-                              Image.network(product.imageUrl),
-                              Text(product.name),
+                              Expanded(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Image.network(
+                                      product.imageUrl,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      product.name,
+                                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                    ),
+                                    Text(
+                                      '\RM${product.price}',
+                                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -160,14 +190,16 @@ class Product {
   final String id;
   final String name;
   final String imageUrl;
+  final double price;
 
-  Product({required this.id, required this.name, required this.imageUrl});
+  Product({required this.id, required this.name, required this.imageUrl, required this.price});
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
       id: json['product_id'] ?? '',
-      name: json['name'] ?? '',
+      name: json['product_name'] ?? '',
       imageUrl: json['image_url'] ?? '',
+      price: double.parse(json['price'].toString()),
     );
   }
 }

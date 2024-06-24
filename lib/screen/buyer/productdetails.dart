@@ -135,7 +135,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                               ),
                               SizedBox(height: 10),
                               Text(
-                                '\$${product.price}',
+                                '\RM${product.price}',
                                 style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
