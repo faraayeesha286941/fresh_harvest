@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'addproduct.dart'; // Import AddProduct
+import 'modifyproduct.dart'; // Import ModifyProduct
+import 'deleteproduct.dart'; // Import DeleteProduct
 
 class ProductView extends StatelessWidget {
   @override
@@ -15,8 +18,10 @@ class ProductView extends StatelessWidget {
               icon: Icon(Icons.add),
               label: Text('Add New Product'),
               onPressed: () {
-                // Navigate to Add New Product screen or perform appropriate action
-                // Navigator.pushNamed(context, '/addNewProduct');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AddProduct()),
+                );
               },
             ),
             SizedBox(height: 20),
@@ -24,8 +29,10 @@ class ProductView extends StatelessWidget {
               icon: Icon(Icons.edit),
               label: Text('Modify Product'),
               onPressed: () {
-                // Navigate to Modify Product screen or perform appropriate action
-                // Navigator.pushNamed(context, '/modifyProduct');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ModifyProduct()),
+                );
               },
             ),
             SizedBox(height: 20),
@@ -33,8 +40,10 @@ class ProductView extends StatelessWidget {
               icon: Icon(Icons.delete),
               label: Text('Delete Product'),
               onPressed: () {
-                // Navigate to Delete Product screen or perform appropriate action
-                // Navigator.pushNamed(context, '/deleteProduct');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => DeleteProduct()),
+                );
               },
             ),
           ],
