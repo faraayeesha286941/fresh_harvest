@@ -92,6 +92,7 @@ class _UserProfileState extends State<UserProfile> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('User Profile'),
+        backgroundColor: Colors.blue[800],
       ),
       body: Center(
         child: loading
@@ -107,9 +108,32 @@ class _UserProfileState extends State<UserProfile> {
                       backgroundImage: AssetImage('assets/user_avatar.png'),
                     ),
                     const SizedBox(height: 20),
-                    Text('First Name: $firstName'),
-                    Text('Last Name: $lastName'),
-                    Text('Email: $email'),
+                    Text(
+                      'First Name: $firstName',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue[800],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Last Name: $lastName',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue[800],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Email: $email',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue[800],
+                      ),
+                    ),
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: () {
@@ -118,17 +142,15 @@ class _UserProfileState extends State<UserProfile> {
                           MaterialPageRoute(builder: (context) => EditProfileScreen()),
                         );
                       },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue[800],
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
                       child: const Text('Edit Profile'),
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => UploadDocuments()),
-                        );
-                      },
-                      child: const Text('Want to become a seller?'),
                     ),
                     const SizedBox(height: 20),
                     ElevatedButton(
@@ -138,16 +160,41 @@ class _UserProfileState extends State<UserProfile> {
                           MaterialPageRoute(builder: (context) => PurchasesScreen()),
                         );
                       },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue[800],
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
                       child: const Text('My Purchases'),
                     ),
                     const SizedBox(height: 20),
                     if (accountType == 'Seller') ...[
                       ElevatedButton(
                         onPressed: _switchToSellerInterface,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue[800],
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
                         child: const Text('Switch to Seller Interface'),
                       ),
+                      const SizedBox(height: 20),
                       ElevatedButton(
                         onPressed: _switchToBuyerInterface,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue[800],
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
                         child: const Text('Switch to Buyer Interface'),
                       ),
                     ],

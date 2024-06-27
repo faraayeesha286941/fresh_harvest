@@ -26,11 +26,7 @@ class _ProductDetailsState extends State<ProductDetails> {
   Future<Product> fetchProductDetails(String productId) async {
     final response = await http.get(Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/getproductdetails.php?product_id=$productId&server_url=${MyConfig().SERVER}'));
 
-    // Print the response body for debugging
-    print('Response body: ${response.body}');
-
     if (response.statusCode == 200) {
-      // Ensure the response is valid JSON
       try {
         return Product.fromJson(jsonDecode(response.body));
       } catch (e) {
@@ -43,14 +39,7 @@ class _ProductDetailsState extends State<ProductDetails> {
 
   void addToCart(String productId, int quantity) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    // Print to verify retrieval
     String userId = prefs.getString('userId') ?? '';
-    print('Retrieved user_id: $userId');
-
-    // Print values for debugging
-    print('user_id: $userId');
-    print('product_id: $productId');
-    print('quantity: $quantity');
 
     final response = await http.post(
       Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/addtocart.php'),
@@ -60,9 +49,6 @@ class _ProductDetailsState extends State<ProductDetails> {
         'quantity': quantity.toString(),
       },
     );
-
-    print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}'); // Print the response body
 
     if (response.statusCode == 200) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -80,7 +66,7 @@ class _ProductDetailsState extends State<ProductDetails> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Product Details'),
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.blue[800],
       ),
       body: Center(
         child: FutureBuilder<Product>(
@@ -105,45 +91,54 @@ class _ProductDetailsState extends State<ProductDetails> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              // Display product image
-                              Image.network(
-                                product.imageUrl,
-                                height: 200,
-                                fit: BoxFit.cover,
-                              ),
-                              SizedBox(height: 20),
-                              Text(
-                                product.name,
-                                style: TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blue,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Display product image
+                            Container(
+                              width: double.infinity,
+                              height: 300,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+                                image: DecorationImage(
+                                  image: NetworkImage(product.imageUrl),
+                                  fit: BoxFit.cover,
                                 ),
                               ),
-                              SizedBox(height: 20),
-                              Text(
-                                'Seller: ${product.sellerName}',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  color: Colors.grey[700],
-                                ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    product.name,
+                                    style: TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.blue[800],
+                                    ),
+                                  ),
+                                  SizedBox(height: 10),
+                                  Text(
+                                    'Seller: ${product.sellerName}',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      color: Colors.grey[700],
+                                    ),
+                                  ),
+                                  SizedBox(height: 10),
+                                  Text(
+                                    '\RM${product.price.toStringAsFixed(2)}',
+                                    style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              SizedBox(height: 10),
-                              Text(
-                                '\RM${product.price.toStringAsFixed(2)}',
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -153,7 +148,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: Colors.blue,
+                        color: Colors.blue[800],
                       ),
                     ),
                     SizedBox(height: 10),
@@ -198,7 +193,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                         icon: Icon(Icons.add_shopping_cart),
                         label: Text('Add To Cart'),
                         style: ElevatedButton.styleFrom(
-                          foregroundColor: Colors.white, backgroundColor: Colors.blue, // Text color
+                          foregroundColor: Colors.white, backgroundColor: Colors.blue[800], // Text color
                           padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                         ),
                       ),

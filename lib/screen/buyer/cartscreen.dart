@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fresh_harvest/appconfig/myconfig.dart';
+import 'productdetails.dart';
 import 'checkout_screen.dart';
 
 class CartScreen extends StatefulWidget {
@@ -58,6 +59,27 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
+  Future<void> deleteCartItem(String cartId) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String userId = prefs.getString('userId') ?? '';
+
+    final response = await http.post(
+      Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/deletecartitem.php'),
+      body: {
+        'user_id': userId,
+        'cart_id': cartId,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        futureCartItems = fetchCartItems();
+      });
+    } else {
+      throw Exception('Failed to delete cart item');
+    }
+  }
+
   void _checkout() {
     Navigator.push(
       context,
@@ -76,7 +98,7 @@ class _CartScreenState extends State<CartScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Your Cart'),
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.blue[800],
       ),
       body: Center(
         child: FutureBuilder<List<CartItem>>(
@@ -101,35 +123,75 @@ class _CartScreenState extends State<CartScreen> {
                     itemCount: cartItems.length,
                     itemBuilder: (context, index) {
                       var item = cartItems[index];
+                      double totalPrice = item.price * item.quantity; // Calculate total price based on quantity
+
                       return Card(
+                        margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                         child: ListTile(
-                          leading: Image.network(
-                            item.imageUrl,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Icon(Icons.error); // Handle image error
-                            },
+                          leading: ClipRRect(
+                            borderRadius: BorderRadius.circular(8.0),
+                            child: Image.network(
+                              item.imageUrl,
+                              width: 50,
+                              height: 50,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Icon(Icons.error, color: Colors.red); // Handle image error
+                              },
+                            ),
                           ),
-                          title: Text(item.productName),
+                          title: Text(
+                            item.productName,
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue[800]),
+                          ),
                           subtitle: Row(
                             children: [
                               IconButton(
-                                icon: Icon(Icons.remove),
+                                icon: Icon(Icons.remove, color: Colors.blue[800]),
                                 onPressed: () {
                                   if (item.quantity > 1) {
                                     updateCartQuantity(item.cartId, item.quantity - 1);
                                   }
                                 },
                               ),
-                              Text('${item.quantity}'),
+                              Text(
+                                '${item.quantity}',
+                                style: TextStyle(fontSize: 16, color: Colors.blue[800]),
+                              ),
                               IconButton(
-                                icon: Icon(Icons.add),
+                                icon: Icon(Icons.add, color: Colors.blue[800]),
                                 onPressed: () {
                                   updateCartQuantity(item.cartId, item.quantity + 1);
                                 },
                               ),
                             ],
                           ),
-                          trailing: Text('\$${item.price.toStringAsFixed(2)}'),
+                          trailing: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                '\RM${totalPrice.toStringAsFixed(2)}', // Display total price
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue[800]),
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.delete, color: Colors.red),
+                                onPressed: () {
+                                  deleteCartItem(item.cartId);
+                                },
+                              ),
+                            ],
+                          ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ProductDetails(productId: item.productId), // Pass product_id
+                              ),
+                            );
+                          },
                         ),
                       );
                     },
@@ -139,7 +201,15 @@ class _CartScreenState extends State<CartScreen> {
                   padding: const EdgeInsets.all(8.0),
                   child: ElevatedButton(
                     onPressed: _checkout,
-                    child: const Text('Checkout'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue[800],
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                      ),
+                    ),
+                    child: const Text('Checkout', style: TextStyle(fontSize: 18)),
                   ),
                 ),
               ],
@@ -153,6 +223,7 @@ class _CartScreenState extends State<CartScreen> {
 
 class CartItem {
   final String cartId;
+  final String productId; // Add productId field
   final String productName;
   final double price;
   final String imageUrl;
@@ -160,6 +231,7 @@ class CartItem {
 
   CartItem({
     required this.cartId,
+    required this.productId, // Initialize productId
     required this.productName,
     required this.price,
     required this.imageUrl,
@@ -169,6 +241,7 @@ class CartItem {
   factory CartItem.fromJson(Map<String, dynamic> json) {
     return CartItem(
       cartId: json['cart_id'],
+      productId: json['product_id'], // Parse productId from JSON
       productName: json['product_name'],
       price: double.parse(json['price']),
       imageUrl: json['image_url'],
