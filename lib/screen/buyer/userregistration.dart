@@ -24,172 +24,130 @@ class _RegistrationPageState extends State<RegistrationPage> {
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   TextEditingController retypePasswordController = TextEditingController();
+  bool isLoading = false;
 
   void registerUser() async {
-  final response = await http.post(
-    Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/register_user.php'),
-    body: {
-      'first_name': firstNameController.text,
-      'last_name': lastNameController.text,
-      'username': usernameController.text,
-      'email': emailController.text,
-      'password': passwordController.text,
-    },
-  );
+    setState(() {
+      isLoading = true;
+    });
 
-  if (response.statusCode == 200) {
-    // Adjusting the response to remove the 'success' text before decoding
-    var jsonResponse = response.body;
-    if (jsonResponse.startsWith('success')) {
-      jsonResponse = jsonResponse.substring('success'.length);
+    final response = await http.post(
+      Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/register_user.php'),
+      body: {
+        'first_name': firstNameController.text,
+        'last_name': lastNameController.text,
+        'username': usernameController.text,
+        'email': emailController.text,
+        'password': passwordController.text,
+      },
+    );
+
+    setState(() {
+      isLoading = false;
+    });
+
+    if (response.statusCode == 200) {
+      // Adjusting the response to remove the 'success' text before decoding
+      var jsonResponse = response.body;
+      if (jsonResponse.startsWith('success')) {
+        jsonResponse = jsonResponse.substring('success'.length);
+      }
+      // Assuming server returns a JSON object on successful registration
+      var data = json.decode(jsonResponse);
+      Fluttertoast.showToast(msg: data['message']);
+    } else {
+      Fluttertoast.showToast(msg: 'Error registering user');
     }
-    // Assuming server returns a JSON object on successful registration
-    var data = json.decode(jsonResponse);
-    Fluttertoast.showToast(msg: data['message']);
-  } else {
-    Fluttertoast.showToast(msg: 'Error registering user');
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Registration')),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text('Registration'),
+        backgroundColor: Colors.blue[800],
+      ),
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
+          padding: const EdgeInsets.all(20.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              const Padding(
-                padding: EdgeInsets.only(bottom: 8.0, left: 20.0, right: 20.0),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('First Name'),
+              const Text(
+                'Create an Account',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1565C0),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: TextField(
-                  controller: firstNameController,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    hintText: '',
-                    isDense: true,
-                    contentPadding: EdgeInsets.all(8.0),
-                  ),
-                ),
-              ),
-              const Padding(
-                padding: EdgeInsets.only(bottom: 8.0, left: 20.0, right: 20.0),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('Last Name'),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: TextField(
-                  controller: lastNameController,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    hintText: '',
-                    isDense: true,
-                    contentPadding: EdgeInsets.all(8.0),
-                  ),
-                ),
-              ),
-              const Padding(
-                padding: EdgeInsets.only(bottom: 8.0, left: 20.0, right: 20.0),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('Username'),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: TextField(
-                  controller: usernameController,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    hintText: '',
-                    isDense: true,
-                    contentPadding: EdgeInsets.all(8.0),
-                  ),
-                ),
-              ),
-              const Padding(
-                padding: EdgeInsets.only(bottom: 8.0, left: 20.0, right: 20.0),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('Email Address'),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: TextField(
-                  controller: emailController,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    hintText: '',
-                    isDense: true,
-                    contentPadding: EdgeInsets.all(8.0),
-                  ),
-                ),
-              ),
-              const Padding(
-                padding: EdgeInsets.only(bottom: 8.0, left: 20.0, right: 20.0),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('Password'),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: TextField(
-                  controller: passwordController,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    hintText: '',
-                    isDense: true,
-                    contentPadding: EdgeInsets.all(8.0),
-                  ),
-                ),
-              ),
-              const Padding(
-                padding: EdgeInsets.only(bottom: 8.0, left: 20.0, right: 20.0),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('Re-type Password'),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: TextField(
-                  controller: retypePasswordController,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    hintText: '',
-                    isDense: true,
-                    contentPadding: EdgeInsets.all(8.0),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: () {
-                  if (passwordController.text == retypePasswordController.text) {
-                    registerUser();
-                  } else {
-                    Fluttertoast.showToast(msg: 'Passwords do not match');
-                  }
-                },
-                child: const Text('Register'),
-              ),
+              const SizedBox(height: 20),
+              buildTextField('First Name', firstNameController),
+              buildTextField('Last Name', lastNameController),
+              buildTextField('Username', usernameController),
+              buildTextField('Email Address', emailController),
+              buildTextField('Password', passwordController, obscureText: true),
+              buildTextField('Re-type Password', retypePasswordController, obscureText: true),
+              const SizedBox(height: 20),
+              isLoading
+                  ? CircularProgressIndicator()
+                  : ElevatedButton(
+                      onPressed: () {
+                        if (passwordController.text == retypePasswordController.text) {
+                          registerUser();
+                        } else {
+                          Fluttertoast.showToast(msg: 'Passwords do not match');
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue[800], // Background color
+                        foregroundColor: Colors.white, // Text color
+                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                        textStyle: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30.0),
+                        ),
+                      ),
+                      child: const Text('Register'),
+                    ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget buildTextField(String labelText, TextEditingController controller, {bool obscureText = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            labelText,
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.blue[800],
+            ),
+          ),
+          const SizedBox(height: 5),
+          TextField(
+            controller: controller,
+            obscureText: obscureText,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.0),
+              ),
+              filled: true,
+              fillColor: Colors.blue[50],
+              contentPadding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -63,6 +63,7 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Main Screen'),
+        backgroundColor: Colors.blue[800],
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.exit_to_app),
@@ -81,35 +82,71 @@ class _MainScreenState extends State<MainScreen> {
                   Expanded(
                     child: TextField(
                       controller: searchController,
-                      decoration: const InputDecoration(hintText: 'Search'),
+                      decoration: InputDecoration(
+                        hintText: 'Search',
+                        filled: true,
+                        fillColor: Colors.blue[50],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.all(12.0),
+                      ),
                     ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.search),
-                    onPressed: searchProducts,  // Call the search function
+                    color: Colors.blue[800],
+                    onPressed: searchProducts,
                   ),
                 ],
               ),
             ),
-            const Text('Categories'),
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                'Categories',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1565C0),
+                ),
+              ),
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                IconButton(
-                  icon: SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: Image.asset('assets/images/vegetable.png'),
-                  ),
-                  onPressed: () => filterByCategory('Vegetables'), // Filter by vegetable category
+                Column(
+                  children: [
+                    IconButton(
+                      icon: SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: Image.asset('assets/images/vegetable.png'),
+                      ),
+                      onPressed: () => filterByCategory('Vegetables'),
+                    ),
+                    Text(
+                      'Vegetables',
+                      style: TextStyle(color: Colors.blue[800]),
+                    ),
+                  ],
                 ),
-                IconButton(
-                  icon: SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: Image.asset('assets/images/fruit.png'),
-                  ),
-                  onPressed: () => filterByCategory('Fruits'), // Filter by fruit category
+                Column(
+                  children: [
+                    IconButton(
+                      icon: SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: Image.asset('assets/images/fruit.png'),
+                      ),
+                      onPressed: () => filterByCategory('Fruits'),
+                    ),
+                    Text(
+                      'Fruits',
+                      style: TextStyle(color: Colors.blue[800]),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -120,15 +157,18 @@ class _MainScreenState extends State<MainScreen> {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
-                    return Text('Error: ${snapshot.error}');
+                    return Center(child: Text('Error: ${snapshot.error}'));
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Text('No products found');
+                    return const Center(child: Text('No products found'));
                   }
 
                   return GridView.builder(
+                    padding: const EdgeInsets.all(8.0),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       childAspectRatio: 4 / 5,
+                      crossAxisSpacing: 8.0,
+                      mainAxisSpacing: 8.0,
                     ),
                     itemCount: snapshot.data?.length ?? 0,
                     itemBuilder: (context, index) {
@@ -143,19 +183,19 @@ class _MainScreenState extends State<MainScreen> {
                           );
                         },
                         child: Card(
-                          margin: EdgeInsets.all(8.0),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          elevation: 4,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: <Widget>[
                               Expanded(
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.grey),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Image.network(
-                                      product.imageUrl,
+                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(12.0)),
+                                    image: DecorationImage(
+                                      image: NetworkImage(product.imageUrl),
                                       fit: BoxFit.cover,
                                     ),
                                   ),
@@ -168,11 +208,11 @@ class _MainScreenState extends State<MainScreen> {
                                   children: [
                                     Text(
                                       product.name,
-                                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                                     ),
                                     Text(
-                                      '\RM${product.price.toStringAsFixed(2)}',  // Format price to two decimal places
-                                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                      '\RM${product.price.toStringAsFixed(2)}',
+                                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                                     ),
                                   ],
                                 ),
