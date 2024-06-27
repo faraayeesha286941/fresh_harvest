@@ -23,9 +23,9 @@ class _MainScreenState extends State<MainScreen> {
     futureProducts = fetchProducts();
   }
 
-  Future<List<Product>> fetchProducts() async {
+  Future<List<Product>> fetchProducts({String category = '', String query = ''}) async {
     final serverUrl = MyConfig().SERVER;
-    final response = await http.get(Uri.parse('$serverUrl/fresh_harvest/php/getlatestproducts.php?server_url=$serverUrl'));
+    final response = await http.get(Uri.parse('$serverUrl/fresh_harvest/php/getlatestproducts.php?server_url=$serverUrl&category=$category&query=$query'));
 
     if (response.statusCode == 200) {
       List<dynamic> productsJson = jsonDecode(response.body);
@@ -43,12 +43,15 @@ class _MainScreenState extends State<MainScreen> {
 
   void searchProducts() {
     final searchQuery = searchController.text;
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BuyerTabScreen(searchQuery: searchQuery),
-      ),
-    );
+    setState(() {
+      futureProducts = fetchProducts(query: searchQuery);
+    });
+  }
+
+  void filterByCategory(String category) {
+    setState(() {
+      futureProducts = fetchProducts(category: category);
+    });
   }
 
   @override
@@ -94,7 +97,7 @@ class _MainScreenState extends State<MainScreen> {
                     height: 40,
                     child: Image.asset('assets/images/vegetable.png'),
                   ),
-                  onPressed: null,
+                  onPressed: () => filterByCategory('Vegetables'), // Filter by vegetable category
                 ),
                 IconButton(
                   icon: SizedBox(
@@ -102,7 +105,7 @@ class _MainScreenState extends State<MainScreen> {
                     height: 40,
                     child: Image.asset('assets/images/fruit.png'),
                   ),
-                  onPressed: null,
+                  onPressed: () => filterByCategory('Fruits'), // Filter by fruit category
                 ),
               ],
             ),
