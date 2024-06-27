@@ -8,7 +8,7 @@ import 'package:fresh_harvest/screen/persistent_bottom_nav.dart';
 import 'package:fresh_harvest/screen/seller/admindashboard.dart';
 
 void main() {
-  runApp(const MaterialApp(
+  runApp(MaterialApp(
     home: LoginPage(),
   ));
 }
@@ -92,59 +92,105 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text('Login'),
+        backgroundColor: Colors.blue[800],
+      ),
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
+          padding: const EdgeInsets.all(20.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
+              Text(
+                'Welcome Back',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue[800],
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Please login to continue',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.blue[600],
+                ),
+              ),
+              const SizedBox(height: 40),
               const Padding(
-                padding: EdgeInsets.only(bottom: 8.0, left: 20.0, right: 20.0),
+                padding: EdgeInsets.only(bottom: 8.0),
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: Text('Username/Email'),
+                  child: Text(
+                    'Username/Email',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFF1565C0),
+                    ),
+                  ),
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                padding: const EdgeInsets.symmetric(horizontal: 0.0),
                 child: TextField(
                   controller: loginController,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
-                    hintText: '',
+                    hintText: 'Enter your username or email',
                     isDense: true,
-                    contentPadding: EdgeInsets.all(8.0),
+                    contentPadding: EdgeInsets.all(12.0),
                   ),
                 ),
               ),
+              const SizedBox(height: 20),
               const Padding(
-                padding: EdgeInsets.only(bottom: 8.0, left: 20.0, right: 20.0),
+                padding: EdgeInsets.only(bottom: 8.0),
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: Text('Password'),
+                  child: Text(
+                    'Password',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFF1565C0),
+                    ),
+                  ),
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                padding: const EdgeInsets.symmetric(horizontal: 0.0),
                 child: TextField(
                   controller: passwordController,
                   obscureText: true, // Hide password
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
-                    hintText: '',
+                    hintText: 'Enter your password',
                     isDense: true,
-                    contentPadding: EdgeInsets.all(8.0),
+                    contentPadding: EdgeInsets.all(12.0),
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 40),
               isLoading
                   ? CircularProgressIndicator()
                   : ElevatedButton(
                       onPressed: () {
                         loginUser();
                       },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue[800], // Background color
+                        foregroundColor: Colors.white, // Text color
+                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                        textStyle: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30.0),
+                        ),
+                      ),
                       child: const Text('Login'),
                     ),
             ],
