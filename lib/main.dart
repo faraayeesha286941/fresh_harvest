@@ -13,13 +13,15 @@ import 'package:fresh_harvest/screen/seller/productview.dart'; // Import Product
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SharedPreferences prefs = await SharedPreferences.getInstance();
+  bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
   String currentInterface = prefs.getString('currentInterface') ?? 'buyer';
-  runApp(MyApp(currentInterface: currentInterface));
+  runApp(MyApp(isLoggedIn: isLoggedIn, currentInterface: currentInterface));
 }
 
 class MyApp extends StatelessWidget {
+  final bool isLoggedIn;
   final String currentInterface;
-  MyApp({required this.currentInterface});
+  MyApp({required this.isLoggedIn, required this.currentInterface});
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +31,9 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: SplashScreen(), // Set SplashScreen as home
+      home: isLoggedIn 
+          ? (currentInterface == 'buyer' ? PersistentBottomNav() : SellerDashboard())
+          : SplashScreen(),
       routes: {
         '/middleScreen': (context) => MiddleScreen(),
         '/home': (context) => currentInterface == 'buyer' ? PersistentBottomNav() : SellerDashboard(),

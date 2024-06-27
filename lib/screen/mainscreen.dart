@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:fresh_harvest/appconfig/myconfig.dart';
 import 'package:fresh_harvest/screen/buyer/productdetails.dart';  // Import the ProductDetails screen
 import 'package:fresh_harvest/screen/buyer/buyertabscreen.dart'; // Import the BuyerTabScreen
+import 'package:fresh_harvest/screen/middlescreen.dart'; // Import the MiddleScreen
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
@@ -38,7 +39,10 @@ class _MainScreenState extends State<MainScreen> {
   void clearSharedPreferences(BuildContext context) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.clear();
-    Navigator.of(context).pushReplacementNamed('/login');
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => MiddleScreen()),
+    );
   }
 
   void searchProducts() {
