@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1093377170976",
+    "project_id": "freshharvest-96950",
+    "storage_bucket": "freshharvest-96950.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1093377170976:android:a2df088d07281c84f3e645",
+        "android_client_info": {
+          "package_name": "com.example.fresh_harvest"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDVRYjFkx9L8cEy1x9k8TQ5rXGIoyRbKFs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

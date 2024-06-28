@@ -14,6 +14,10 @@ dependencies:
   image_picker: ^1.0.7
   shared_preferences: ^2.0.15
   web_socket_channel: ^2.1.0
+  firebase_core: ^2.16.0
+  firebase_storage: ^11.3.0
+  firebase_auth: ^4.20.0
+  cloud_firestore: ^4.8.1
 
   path: any
   http_parser: any
