@@ -37,35 +37,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       });
 
       if (response.statusCode == 200) {
-  var jsonResponse = response.body;
-  if (jsonResponse.startsWith('success')) {
-    jsonResponse = jsonResponse.substring('success'.length);
-    // Print the modified jsonResponse for debugging
-    print('Modified jsonResponse: $jsonResponse');
-
-    var data = json.decode(jsonResponse);
-    // Print the data for debugging
-    print('Decoded data: $data');
-
-    setState(() {
-      initialUsername = data['username'] ?? ''; // Use empty string if null
-      initialEmail = data['email'] ?? ''; // Use empty string if null
-      _usernameController.text = data['username'] ?? '';
-      _emailController.text = data['email'] ?? '';
-      _loading = false;
-    });
-  } else {
-    // Handle case where the response does not start with 'success'
-    setState(() {
-      _loading = false;
-    });
-  }
-} else {
-  // Handle non-200 status codes
-  setState(() {
-    _loading = false;
-  });
-}
+        var jsonResponse = response.body;
+        if (jsonResponse.startsWith('success')) {
+          jsonResponse = jsonResponse.substring('success'.length);
+          var data = json.decode(jsonResponse);
+          setState(() {
+            initialUsername = data['username'] ?? ''; // Use empty string if null
+            initialEmail = data['email'] ?? ''; // Use empty string if null
+            _usernameController.text = data['username'] ?? '';
+            _emailController.text = data['email'] ?? '';
+            _loading = false;
+          });
+        } else {
+          setState(() {
+            _loading = false;
+          });
+        }
+      } else {
+        setState(() {
+          _loading = false;
+        });
+      }
     } else {
       setState(() {
         _loading = false;
@@ -109,32 +101,66 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit Profile'),
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.blue[800],
       ),
       body: _loading
           ? Center(child: CircularProgressIndicator())
-          : Padding(
+          : SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextField(
-                    controller: _usernameController,
-                    decoration: InputDecoration(labelText: 'Username'),
-                  ),
-                  TextField(
-                    controller: _emailController,
-                    decoration: InputDecoration(labelText: 'Email'),
-                  ),
-                  TextField(
-                    controller: _passwordController,
-                    decoration: InputDecoration(labelText: 'Password'),
-                    obscureText: true,
+                  Text(
+                    'Edit Profile',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue[800],
+                    ),
                   ),
                   const SizedBox(height: 20),
+                  TextField(
+                    controller: _usernameController,
+                    decoration: InputDecoration(
+                      labelText: 'Username',
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: _emailController,
+                    decoration: InputDecoration(
+                      labelText: 'Email',
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: _passwordController,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    ),
+                    obscureText: true,
+                  ),
+                  const SizedBox(height: 30),
                   ElevatedButton(
                     onPressed: _updateProfile,
-                    child: const Text('Update Profile'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue[800],
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text(
+                      'Update Profile',
+                      style: TextStyle(fontSize: 18),
+                    ),
                   ),
                 ],
               ),

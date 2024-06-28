@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'mainscreen.dart';
 import 'package:fresh_harvest/screen/buyer/userprofile.dart'; // Import UserProfile page
 import 'package:fresh_harvest/screen/buyer/cartscreen.dart'; // Import CartScreen
@@ -14,6 +15,7 @@ class PersistentBottomNav extends StatefulWidget {
 class _PersistentBottomNavState extends State<PersistentBottomNav> {
   int _selectedIndex = 0;
   UniqueKey cartScreenKey = UniqueKey(); // Add a key for CartScreen
+  String userId = '';
 
   final List<GlobalKey<NavigatorState>> _navigatorKeys = [
     GlobalKey<NavigatorState>(),
@@ -21,6 +23,19 @@ class _PersistentBottomNavState extends State<PersistentBottomNav> {
     GlobalKey<NavigatorState>(),
     GlobalKey<NavigatorState>(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserId();
+  }
+
+  Future<void> _loadUserId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userId = prefs.getString('userId') ?? '';
+    });
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -64,7 +79,7 @@ class _PersistentBottomNavState extends State<PersistentBottomNav> {
                       );
                     case 2:
                       return MaterialPageRoute(
-                        builder: (BuildContext context) => ChatPage(userId: '1', receiverId: '2'), // Example userId and receiverId
+                        builder: (BuildContext context) => ChatPage(userId: userId, receiverId: '3'), // Use the correct userId
                       );
                     case 3:
                       return MaterialPageRoute(

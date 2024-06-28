@@ -40,11 +40,11 @@ class _UserProfileState extends State<UserProfile> {
       });
 
       if (response.statusCode == 200) {
-        var jsonResponse = response.body;
+        var jsonResponse = jsonDecode(response.body);
         print(jsonResponse);
-        if (jsonResponse.startsWith('success')) {
-          jsonResponse = jsonResponse.substring('success'.length);
-          var data = json.decode(jsonResponse);
+
+        if (jsonResponse['message'] == 'success') {
+          var data = jsonResponse['data'];
           setState(() {
             firstName = data['first_name'];
             lastName = data['last_name'];

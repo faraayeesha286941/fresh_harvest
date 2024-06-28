@@ -150,7 +150,7 @@ class _CartScreenState extends State<CartScreen> {
                           subtitle: Row(
                             children: [
                               IconButton(
-                                icon: Icon(Icons.remove, color: Colors.blue[800]),
+                                icon: Icon(Icons.remove, color: Colors.blue[800], size: 20.0), // Adjusted icon size
                                 onPressed: () {
                                   if (item.quantity > 1) {
                                     updateCartQuantity(item.cartId, item.quantity - 1);
@@ -162,27 +162,31 @@ class _CartScreenState extends State<CartScreen> {
                                 style: TextStyle(fontSize: 16, color: Colors.blue[800]),
                               ),
                               IconButton(
-                                icon: Icon(Icons.add, color: Colors.blue[800]),
+                                icon: Icon(Icons.add, color: Colors.blue[800], size: 20.0), // Adjusted icon size
                                 onPressed: () {
                                   updateCartQuantity(item.cartId, item.quantity + 1);
                                 },
                               ),
                             ],
                           ),
-                          trailing: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                '\RM${totalPrice.toStringAsFixed(2)}', // Display total price
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue[800]),
-                              ),
-                              IconButton(
-                                icon: Icon(Icons.delete, color: Colors.red),
-                                onPressed: () {
-                                  deleteCartItem(item.cartId);
-                                },
-                              ),
-                            ],
+                          trailing: Container(
+                            height: double.infinity,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  '\RM${totalPrice.toStringAsFixed(2)}', // Display total price
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue[800]),
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.delete, color: Colors.red, size: 20.0), // Adjusted icon size
+                                  onPressed: () {
+                                    deleteCartItem(item.cartId);
+                                  },
+                                ),
+                              ],
+                            ),
                           ),
                           onTap: () {
                             Navigator.push(
