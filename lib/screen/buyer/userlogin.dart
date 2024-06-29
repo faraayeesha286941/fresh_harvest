@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:firebase_database/firebase_database.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'dart:convert';
-import 'package:fresh_harvest/appconfig/myconfig.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fresh_harvest/screen/persistent_bottom_nav.dart';
 import 'package:fresh_harvest/screen/seller/admindashboard.dart';
+import 'package:bcrypt/bcrypt.dart';
 
 void main() {
   runApp(MaterialApp(
@@ -21,7 +20,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  TextEditingController loginController = TextEditingController();
+  TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   bool isLoading = false;
 
@@ -30,63 +29,69 @@ class _LoginPageState extends State<LoginPage> {
       isLoading = true;
     });
 
-    String login = loginController.text;
+    String email = emailController.text;
     String password = passwordController.text;
 
-    // Check for hardcoded admin credentials
-    if (login == 'admin' && password == 'admin123') {
+    // Check for hardcoded admin credentials first
+    if (email == 'admin@admin.com' && password == 'admin123') {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => AdminDashboard()),
       );
+      setState(() {
+        isLoading = false;
+      });
       return;
     }
 
-    final response = await http.post(
-      Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/login_user.php'),
-      body: {
-        'login': login,
-        'password': password,
-      },
-    );
+    DatabaseReference usersRef = FirebaseDatabase.instance.ref().child('db_user');
+    try {
+      DatabaseEvent event = await usersRef.once();
+      print("Database event: ${event.snapshot.value}");
 
-    if (response.statusCode == 200) {
-      var jsonResponse = response.body;
-      print(jsonResponse);
+      if (event.snapshot.value != null) {
+        List<dynamic> users = event.snapshot.value as List<dynamic>;
+        debugPrint(users.toString());
 
-      // Check if the response contains "success" and then parse the JSON
-      if (jsonResponse.contains('success')) {
-        jsonResponse = jsonResponse.replaceFirst('{"message":"success",', '');
-        jsonResponse = '{' + jsonResponse; // Re-add the opening brace
+        bool userFound = false;
 
-        var data = jsonDecode(jsonResponse); // Decode JSON response
+        for (var user in users) {
+          print('Checking user: $user');
+          if (user != null && user['email'] == email && BCrypt.checkpw(password, user['password'])) {
+            userFound = true;
+            print('User found: $user');
 
-        // Save user data here
-        final SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString('userEmail', data['email']);
-        await prefs.setString('userPassword', passwordController.text);
-        await prefs.setString('userId', data['user_id']); // Store user_id
-        await prefs.setString('accountType', data['account_type']); // Store account_type
-        await prefs.setBool('isLoggedIn', true);  // Set the isLoggedIn flag
+            // Store user data in SharedPreferences
+            SharedPreferences prefs = await SharedPreferences.getInstance();
+            await prefs.setString('userEmail', user['email']);
+            await prefs.setString('userId', user['user_id'].toString());
+            await prefs.setString('accountType', user['account_type']);
+            await prefs.setBool('isLoggedIn', true);
 
-        // Navigate to PersistentBottomNav after successful login
-        if (!mounted) return;
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => PersistentBottomNav()),
+            );
+            break;
+          }
+        }
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => PersistentBottomNav()),
-        );
+        if (!userFound) {
+          Fluttertoast.showToast(msg: 'Invalid email or password');
+          print('Invalid email or password');
+        }
       } else {
-        // Show error message in case of any issue
-        Fluttertoast.showToast(msg: jsonDecode(jsonResponse)['message']);
+        Fluttertoast.showToast(msg: 'No users found');
+        print('No users found');
       }
-    } else {
-      Fluttertoast.showToast(msg: 'Failed to connect to the server');
+    } catch (error) {
+      Fluttertoast.showToast(msg: 'Error: $error');
+      print('Error: $error');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
-
-    setState(() {
-      isLoading = false;
-    });
   }
 
   @override
@@ -125,7 +130,7 @@ class _LoginPageState extends State<LoginPage> {
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Username/Email',
+                    'Email',
                     style: TextStyle(
                       fontSize: 16,
                       color: Color(0xFF1565C0),
@@ -136,10 +141,10 @@ class _LoginPageState extends State<LoginPage> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 0.0),
                 child: TextField(
-                  controller: loginController,
+                  controller: emailController,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
-                    hintText: 'Enter your username or email',
+                    hintText: 'Enter your email',
                     isDense: true,
                     contentPadding: EdgeInsets.all(12.0),
                   ),
@@ -176,9 +181,7 @@ class _LoginPageState extends State<LoginPage> {
               isLoading
                   ? CircularProgressIndicator()
                   : ElevatedButton(
-                      onPressed: () {
-                        loginUser();
-                      },
+                      onPressed: loginUser,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue[800], // Background color
                         foregroundColor: Colors.white, // Text color

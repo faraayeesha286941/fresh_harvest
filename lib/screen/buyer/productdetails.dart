@@ -1,8 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:firebase_database/firebase_database.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:fresh_harvest/appconfig/myconfig.dart';
 
 class ProductDetails extends StatefulWidget {
   final String productId;
@@ -24,41 +22,42 @@ class _ProductDetailsState extends State<ProductDetails> {
   }
 
   Future<Product> fetchProductDetails(String productId) async {
-    final response = await http.get(Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/getproductdetails.php?product_id=$productId&server_url=${MyConfig().SERVER}'));
+    DatabaseReference productRef = FirebaseDatabase.instance.ref().child('db_product').child(productId);
+    DatabaseEvent event = await productRef.once();
 
-    if (response.statusCode == 200) {
-      try {
-        return Product.fromJson(jsonDecode(response.body));
-      } catch (e) {
-        throw Exception('Failed to parse product details');
-      }
+    if (event.snapshot.exists) {
+      Map<String, dynamic> productJson = Map<String, dynamic>.from(event.snapshot.value as Map);
+      return Product.fromJson(productJson);
     } else {
-      throw Exception('Failed to load product details');
+      throw Exception('Product not found');
     }
   }
 
-  void addToCart(String productId, int quantity) async {
+  Future<void> addToCart(String productId, int quantity) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String userId = prefs.getString('userId') ?? '';
 
-    final response = await http.post(
-      Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/addtocart.php'),
-      body: {
-        'user_id': userId,
-        'product_id': productId,
-        'quantity': quantity.toString(),
-      },
-    );
+    DatabaseReference counterRef = FirebaseDatabase.instance.ref().child('cart_counter');
+    DatabaseReference cartRef = FirebaseDatabase.instance.ref().child('db_cart');
 
-    if (response.statusCode == 200) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Added to cart')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to add to cart')),
-      );
-    }
+    // Get the current counter value
+    DatabaseEvent counterEvent = await counterRef.once();
+    int currentCounter = (counterEvent.snapshot.value as int?) ?? 0;
+    int newCartId = currentCounter + 1;
+
+    // Update the counter
+    await counterRef.set(newCartId);
+
+    // Add to cart with the new cart ID
+    await cartRef.child(newCartId.toString()).set({
+      'user_id': userId,
+      'product_id': productId,
+      'quantity': quantity,
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Added to cart')),
+    );
   }
 
   @override
@@ -228,12 +227,12 @@ class Product {
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
-      id: json['product_id'] ?? '',
+      id: json['product_id'].toString(),
       name: json['product_name'] ?? '',
       sellerName: json['seller_name'] ?? '',
-      price: double.parse(json['price'] ?? '0'),
+      price: double.parse(json['price'].toString()),
       description: json['product_description'] ?? '',
-      imageUrl: json['image_url'] ?? '', // Parse image URL from JSON
+      imageUrl: 'https://firebasestorage.googleapis.com/v0/b/freshharvest-96950.appspot.com/o/products%2F${json['product_id']}_1.jpg?alt=media', // Parse image URL from JSON
     );
   }
 }

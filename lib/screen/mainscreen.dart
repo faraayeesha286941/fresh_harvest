@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:fresh_harvest/appconfig/myconfig.dart';
-import 'package:fresh_harvest/screen/buyer/productdetails.dart';  // Import the ProductDetails screen
-import 'package:fresh_harvest/screen/buyer/buyertabscreen.dart'; // Import the BuyerTabScreen
+import 'package:firebase_database/firebase_database.dart';
+import 'package:fresh_harvest/screen/buyer/productdetails.dart'; // Import the ProductDetails screen
 import 'package:fresh_harvest/screen/middlescreen.dart'; // Import the MiddleScreen
 
 class MainScreen extends StatefulWidget {
@@ -25,13 +22,39 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<List<Product>> fetchProducts({String category = '', String query = ''}) async {
-    final serverUrl = MyConfig().SERVER;
-    final response = await http.get(Uri.parse('$serverUrl/fresh_harvest/php/getlatestproducts.php?server_url=$serverUrl&category=$category&query=$query'));
+    print('Fetching products from Firebase');
+    DatabaseReference productsRef = FirebaseDatabase.instance.ref().child('db_product');
 
-    if (response.statusCode == 200) {
-      List<dynamic> productsJson = jsonDecode(response.body);
-      return productsJson.map((json) => Product.fromJson(json)).toList();
-    } else {
+    try {
+      DataSnapshot snapshot = await productsRef.get();
+      print('DataSnapshot received: ${snapshot.value}');
+
+      if (snapshot.exists) {
+        List<dynamic> productsList = snapshot.value as List<dynamic>;
+        List<Product> products = productsList.map((value) {
+          Map<String, dynamic> productJson = Map<String, dynamic>.from(value as Map);
+          return Product.fromJson(productJson);
+        }).toList();
+
+        // Filter by category
+        if (category.isNotEmpty) {
+          products = products.where((product) => product.category == category).toList();
+        }
+
+        // Filter by search query
+        if (query.isNotEmpty) {
+          products = products.where((product) =>
+              product.name.toLowerCase().contains(query.toLowerCase())).toList();
+        }
+
+        print('Products loaded: ${products.length}');
+        return products;
+      } else {
+        print('No products found');
+        throw Exception('No products found');
+      }
+    } catch (error) {
+      print('Error fetching products: $error');
       throw Exception('Failed to load products');
     }
   }
@@ -238,15 +261,21 @@ class Product {
   final String name;
   final String imageUrl;
   final double price;
+  final String category;
 
-  Product({required this.id, required this.name, required this.imageUrl, required this.price});
+  Product({
+    required this.id,
+    required this.name,
+    required this.price,
+    required this.category,
+  }) : imageUrl = 'https://firebasestorage.googleapis.com/v0/b/freshharvest-96950.appspot.com/o/products%2F${id}_1.jpg?alt=media';
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
-      id: json['product_id'] ?? '',
+      id: json['product_id'].toString(),
       name: json['product_name'] ?? '',
-      imageUrl: json['image_url'] ?? '',
       price: double.parse(json['price'].toString()),
+      category: json['category'] ?? '',
     );
   }
 }

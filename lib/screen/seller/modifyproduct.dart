@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:fresh_harvest/appconfig/myconfig.dart';
 
 class ModifyProduct extends StatefulWidget {
   @override
@@ -10,7 +8,6 @@ class ModifyProduct extends StatefulWidget {
 }
 
 class _ModifyProductState extends State<ModifyProduct> {
-  TextEditingController productIdController = TextEditingController();
   TextEditingController productNameController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
   TextEditingController amountController = TextEditingController();
@@ -18,39 +15,36 @@ class _ModifyProductState extends State<ModifyProduct> {
 
   bool _isLoading = false;
   bool _isProductFetched = false;
+  Map<String, dynamic>? selectedProduct;
 
-  Future<void> fetchProduct() async {
+  @override
+  void initState() {
+    super.initState();
+    fetchAllProducts();
+  }
+
+  Future<void> fetchAllProducts() async {
     setState(() {
       _isLoading = true;
     });
 
-    final response = await http.get(
-      Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/getproduct.php?product_id=${productIdController.text}'),
-    );
+    DatabaseReference productRef = FirebaseDatabase.instance.ref().child('db_product');
+    DatabaseEvent event = await productRef.once();
 
-    print("Response status: ${response.statusCode}");
-    print("Response body: ${response.body}");
+    print("Database event snapshot: ${event.snapshot.value}");
 
-    if (response.statusCode == 200) {
-      try {
-        final jsonResponse = jsonDecode(response.body);
-        if (jsonResponse['message'] != 'Product not found') {
-          setState(() {
-            productNameController.text = jsonResponse['product_name'];
-            descriptionController.text = jsonResponse['product_description'];
-            amountController.text = jsonResponse['amount'].toString();
-            locationController.text = jsonResponse['location'];
-            _isProductFetched = true;
-          });
-        } else {
-          Fluttertoast.showToast(msg: jsonResponse['message']);
-        }
-      } catch (e) {
-        print("Error decoding JSON: $e");
-        Fluttertoast.showToast(msg: 'Error fetching product details');
+    if (event.snapshot.value != null) {
+      Map<String, dynamic> products;
+      if (event.snapshot.value is List) {
+        products = (event.snapshot.value as List).asMap().map((key, value) => MapEntry(key.toString(), value));
+      } else {
+        products = Map<String, dynamic>.from(event.snapshot.value as Map);
       }
+      setState(() {
+        this.products = products;
+      });
     } else {
-      Fluttertoast.showToast(msg: 'Failed to connect to the server');
+      Fluttertoast.showToast(msg: 'No products found');
     }
 
     setState(() {
@@ -59,43 +53,50 @@ class _ModifyProductState extends State<ModifyProduct> {
   }
 
   Future<void> updateProduct() async {
+    if (selectedProduct == null) {
+      Fluttertoast.showToast(msg: 'Please select a product first');
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
 
-    final response = await http.post(
-      Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/updateproduct.php'),
-      body: {
-        'product_id': productIdController.text,
+    String productId = selectedProduct!['product_id'].toString();
+    DatabaseReference productRef = FirebaseDatabase.instance.ref().child('db_product').child(productId);
+
+    try {
+      await productRef.update({
         'product_name': productNameController.text,
         'product_description': descriptionController.text,
-        'amount': amountController.text,
-        'location': locationController.text,
-      },
-    );
+        'amount': int.parse(amountController.text),
+        'place_location': locationController.text,
+      });
 
-    print("Response status: ${response.statusCode}");
-    print("Response body: ${response.body}");
-
-    if (response.statusCode == 200) {
-      try {
-        final jsonResponse = jsonDecode(response.body);
-        if (jsonResponse['message'] == 'success') {
-          Fluttertoast.showToast(msg: 'Product updated successfully');
-        } else {
-          Fluttertoast.showToast(msg: jsonResponse['message']);
-        }
-      } catch (e) {
-        print("Error decoding JSON: $e");
-        Fluttertoast.showToast(msg: 'Error updating product details');
-      }
-    } else {
-      Fluttertoast.showToast(msg: 'Failed to connect to the server');
+      Fluttertoast.showToast(msg: 'Product updated successfully');
+      fetchAllProducts(); // Refresh the product list
+    } catch (e) {
+      Fluttertoast.showToast(msg: 'Failed to update product');
+      print('Error: $e');
     }
 
     setState(() {
       _isLoading = false;
       _isProductFetched = false;
+      selectedProduct = null; // Clear the selected product after update
+    });
+  }
+
+  Map<String, dynamic> products = {};
+
+  void selectProduct(Map<String, dynamic> product) {
+    setState(() {
+      selectedProduct = product;
+      productNameController.text = product['product_name'] ?? '';
+      descriptionController.text = product['product_description'] ?? '';
+      amountController.text = product['amount'].toString();
+      locationController.text = product['place_location'] ?? '';
+      _isProductFetched = true;
     });
   }
 
@@ -104,79 +105,96 @@ class _ModifyProductState extends State<ModifyProduct> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Modify Product'),
+        backgroundColor: Colors.blue[800],
       ),
       body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              TextField(
-                controller: productIdController,
-                decoration: InputDecoration(
-                  labelText: 'Product ID',
-                  border: OutlineInputBorder(),
-                  isDense: true,
-                  contentPadding: EdgeInsets.all(8.0),
+        child: _isLoading
+            ? CircularProgressIndicator()
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    DataTable(
+                      columns: const [
+                        DataColumn(label: Text('ID')),
+                        DataColumn(label: Text('Name')),
+                        DataColumn(label: Text('Edit')),
+                      ],
+                      rows: products.values.map((product) {
+                        return DataRow(
+                          cells: [
+                            DataCell(Text(product['product_id'].toString())),
+                            DataCell(Text(product['product_name'] ?? '')),
+                            DataCell(
+                              ElevatedButton(
+                                onPressed: () => selectProduct(product),
+                                child: Text('Edit'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue[800], // Button color
+                                  foregroundColor: Colors.white, // Text color
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+                    if (_isProductFetched) ...[
+                      SizedBox(height: 20),
+                      TextField(
+                        controller: productNameController,
+                        decoration: InputDecoration(
+                          labelText: 'Product Name',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                          contentPadding: EdgeInsets.all(8.0),
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                      TextField(
+                        controller: descriptionController,
+                        decoration: InputDecoration(
+                          labelText: 'Description',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                          contentPadding: EdgeInsets.all(8.0),
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                      TextField(
+                        controller: amountController,
+                        decoration: InputDecoration(
+                          labelText: 'Amount',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                          contentPadding: EdgeInsets.all(8.0),
+                        ),
+                        keyboardType: TextInputType.number,
+                      ),
+                      SizedBox(height: 20),
+                      TextField(
+                        controller: locationController,
+                        decoration: InputDecoration(
+                          labelText: 'Location',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                          contentPadding: EdgeInsets.all(8.0),
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: _isLoading ? null : updateProduct,
+                        child: _isLoading ? CircularProgressIndicator() : Text('Update Product'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue[800], // Button color
+                          foregroundColor: Colors.white, // Text color
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-                keyboardType: TextInputType.number,
               ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _isLoading ? null : fetchProduct,
-                child: _isLoading ? CircularProgressIndicator() : Text('Fetch Product'),
-              ),
-              if (_isProductFetched) ...[
-                SizedBox(height: 20),
-                TextField(
-                  controller: productNameController,
-                  decoration: InputDecoration(
-                    labelText: 'Product Name',
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                    contentPadding: EdgeInsets.all(8.0),
-                  ),
-                ),
-                SizedBox(height: 20),
-                TextField(
-                  controller: descriptionController,
-                  decoration: InputDecoration(
-                    labelText: 'Description',
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                    contentPadding: EdgeInsets.all(8.0),
-                  ),
-                ),
-                SizedBox(height: 20),
-                TextField(
-                  controller: amountController,
-                  decoration: InputDecoration(
-                    labelText: 'Amount',
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                    contentPadding: EdgeInsets.all(8.0),
-                  ),
-                  keyboardType: TextInputType.number,
-                ),
-                SizedBox(height: 20),
-                TextField(
-                  controller: locationController,
-                  decoration: InputDecoration(
-                    labelText: 'Location',
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                    contentPadding: EdgeInsets.all(8.0),
-                  ),
-                ),
-                SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: _isLoading ? null : updateProduct,
-                  child: _isLoading ? CircularProgressIndicator() : Text('Update Product'),
-                ),
-              ],
-            ],
-          ),
-        ),
       ),
     );
   }
