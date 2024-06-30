@@ -12,6 +12,7 @@ class _ModifyProductState extends State<ModifyProduct> {
   TextEditingController descriptionController = TextEditingController();
   TextEditingController amountController = TextEditingController();
   TextEditingController locationController = TextEditingController();
+  TextEditingController priceController = TextEditingController();
 
   bool _isLoading = false;
   bool _isProductFetched = false;
@@ -71,6 +72,7 @@ class _ModifyProductState extends State<ModifyProduct> {
         'product_description': descriptionController.text,
         'amount': int.parse(amountController.text),
         'place_location': locationController.text,
+        'price': double.parse(priceController.text),
       });
 
       Fluttertoast.showToast(msg: 'Product updated successfully');
@@ -96,6 +98,7 @@ class _ModifyProductState extends State<ModifyProduct> {
       descriptionController.text = product['product_description'] ?? '';
       amountController.text = product['amount'].toString();
       locationController.text = product['place_location'] ?? '';
+      priceController.text = product['price'].toString();
       _isProductFetched = true;
     });
   }
@@ -122,13 +125,14 @@ class _ModifyProductState extends State<ModifyProduct> {
                         DataColumn(label: Text('Edit')),
                       ],
                       rows: products.values.map((product) {
+                        Map<String, dynamic> productMap = Map<String, dynamic>.from(product);
                         return DataRow(
                           cells: [
-                            DataCell(Text(product['product_id'].toString())),
-                            DataCell(Text(product['product_name'] ?? '')),
+                            DataCell(Text(productMap['product_id'].toString())),
+                            DataCell(Text(productMap['product_name'] ?? '')),
                             DataCell(
                               ElevatedButton(
-                                onPressed: () => selectProduct(product),
+                                onPressed: () => selectProduct(productMap),
                                 child: Text('Edit'),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.blue[800], // Button color
@@ -181,6 +185,17 @@ class _ModifyProductState extends State<ModifyProduct> {
                           isDense: true,
                           contentPadding: EdgeInsets.all(8.0),
                         ),
+                      ),
+                      SizedBox(height: 20),
+                      TextField(
+                        controller: priceController,
+                        decoration: InputDecoration(
+                          labelText: 'Price',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                          contentPadding: EdgeInsets.all(8.0),
+                        ),
+                        keyboardType: TextInputType.numberWithOptions(decimal: true),
                       ),
                       SizedBox(height: 20),
                       ElevatedButton(
