@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:fresh_harvest/screen/buyer/productdetails.dart'; // Import the ProductDetails screen
 import 'package:fresh_harvest/screen/middlescreen.dart'; // Import the MiddleScreen
+import 'package:fresh_harvest/screen/persistent_bottom_nav.dart'; // Import PersistentBottomNav
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
@@ -62,9 +63,37 @@ class _MainScreenState extends State<MainScreen> {
   void clearSharedPreferences(BuildContext context) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.clear();
-    Navigator.pushReplacement(
+    Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => MiddleScreen()),
+      (Route<dynamic> route) => false,
+    );
+  }
+
+  void confirmLogout(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Log out'),
+          content: Text('Are you sure you want to log out?'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('Log out'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                clearSharedPreferences(context);
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -90,7 +119,7 @@ class _MainScreenState extends State<MainScreen> {
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.exit_to_app),
-            onPressed: () => clearSharedPreferences(context),
+            onPressed: () => confirmLogout(context),
             tooltip: 'Log out',
           ),
         ],

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:firebase_database/firebase_database.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'dart:convert';
-import 'package:fresh_harvest/appconfig/myconfig.dart';
+import 'package:bcrypt/bcrypt.dart';
+import 'package:intl/intl.dart';
+import 'userlogin.dart';  // Ensure this import is correct based on your project structure
 
 void main() {
   runApp(const MaterialApp(
@@ -31,33 +32,44 @@ class _RegistrationPageState extends State<RegistrationPage> {
       isLoading = true;
     });
 
-    final response = await http.post(
-      Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/register_user.php'),
-      body: {
-        'first_name': firstNameController.text,
-        'last_name': lastNameController.text,
-        'username': usernameController.text,
-        'email': emailController.text,
-        'password': passwordController.text,
-      },
-    );
+    final DatabaseReference counterRef = FirebaseDatabase.instance.ref().child('user_counter');
+    final DatabaseReference usersRef = FirebaseDatabase.instance.ref().child('db_user');
+
+    // Get the current user counter
+    DataSnapshot counterSnapshot = await counterRef.get();
+    int userCounter = (counterSnapshot.value ?? 0) as int;
+
+    // Increment the counter for the new user
+    userCounter++;
+
+    String hashedPassword = BCrypt.hashpw(passwordController.text, BCrypt.gensalt());
+    String currentDate = DateFormat("yyyy-MM-ddTHH:mm:ss").format(DateTime.now());
+
+    await usersRef.child(userCounter.toString()).set({
+      'first_name': firstNameController.text,
+      'last_name': lastNameController.text,
+      'username': usernameController.text,
+      'email': emailController.text,
+      'password': hashedPassword,
+      'user_id': userCounter,
+      'account_type': 'Buyer',
+      'date_reg': currentDate,
+    });
+
+    // Update the counter in the database
+    await counterRef.set(userCounter);
 
     setState(() {
       isLoading = false;
     });
 
-    if (response.statusCode == 200) {
-      // Adjusting the response to remove the 'success' text before decoding
-      var jsonResponse = response.body;
-      if (jsonResponse.startsWith('success')) {
-        jsonResponse = jsonResponse.substring('success'.length);
-      }
-      // Assuming server returns a JSON object on successful registration
-      var data = json.decode(jsonResponse);
-      Fluttertoast.showToast(msg: data['message']);
-    } else {
-      Fluttertoast.showToast(msg: 'Error registering user');
-    }
+    Fluttertoast.showToast(msg: 'User registered successfully');
+
+    // Navigate to the login screen
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => LoginPage()),
+    );
   }
 
   @override

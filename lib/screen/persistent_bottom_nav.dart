@@ -79,7 +79,7 @@ class _PersistentBottomNavState extends State<PersistentBottomNav> {
                       );
                     case 2:
                       return MaterialPageRoute(
-                        builder: (BuildContext context) => ChatPage(userId: userId, receiverId: '3'), // Use the correct userId
+                        builder: (BuildContext context) => ChatPage(userId: userId, receiverId: '1'), // Set receiverId to 1
                       );
                     case 3:
                       return MaterialPageRoute(
