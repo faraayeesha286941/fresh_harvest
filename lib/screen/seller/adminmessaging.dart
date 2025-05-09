@@ -1,8 +1,6 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:fresh_harvest/appconfig/myconfig.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class AdminMessagingPage extends StatefulWidget {
   @override
@@ -13,68 +11,134 @@ class _AdminMessagingPageState extends State<AdminMessagingPage> {
   List<User> users = [];
   User? selectedUser;
   List<Message> messages = [];
-  Timer? timer;
+  late DatabaseReference usersRef;
+  late DatabaseReference messagesRef;
+  StreamSubscription<DatabaseEvent>? usersSubscription;
+  StreamSubscription<DatabaseEvent>? messagesSubscription;
   final TextEditingController _controller = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    usersRef = FirebaseDatabase.instance.ref().child('db_user');
+    messagesRef = FirebaseDatabase.instance.ref().child('messages');
     _fetchUsers();
-  }
-
-  Future<void> _fetchUsers() async {
-    final serverUrl = MyConfig().SERVER;
-
-    final response = await http.get(Uri.parse('$serverUrl/fresh_harvest/php/getusers.php'));
-
-    if (response.statusCode == 200) {
-      List<dynamic> jsonResponse = jsonDecode(response.body);
-      setState(() {
-        users = jsonResponse.map((data) => User.fromJson(data)).toList();
-      });
-    } else {
-      // Handle error
-    }
-  }
-
-  Future<void> _fetchMessages(String userId) async {
-    final serverUrl = MyConfig().SERVER;
-
-    final response = await http.get(Uri.parse('$serverUrl/fresh_harvest/php/getmessages.php?user_id=$userId&receiver_id=3'));
-
-    if (response.statusCode == 200) {
-      List<dynamic> jsonResponse = jsonDecode(response.body);
-      setState(() {
-        messages = jsonResponse.map((data) => Message.fromJson(data)).toList();
-      });
-    } else {
-      // Handle error
-    }
-  }
-
-  Future<void> _sendMessage(String message) async {
-    final serverUrl = MyConfig().SERVER;
-
-    final response = await http.post(
-      Uri.parse('$serverUrl/fresh_harvest/php/sendmessage.php'),
-      body: {
-        'sender_id': '3', // Admin's user ID
-        'receiver_id': selectedUser!.id,
-        'message': message,
-      },
-    );
-
-    if (response.statusCode == 200) {
-      _fetchMessages(selectedUser!.id); // Refresh messages after sending a new one
-    } else {
-      // Handle error
-    }
   }
 
   @override
   void dispose() {
-    timer?.cancel();
+    usersSubscription?.cancel();
+    messagesSubscription?.cancel();
     super.dispose();
+  }
+
+  Future<void> _fetchUsers() async {
+    DataSnapshot snapshot = await usersRef.get();
+    print('Users event: ${snapshot.value}'); // Debug log
+
+    if (snapshot.exists) {
+      List<User> fetchedUsers = [];
+
+      if (snapshot.value is List) {
+        List<dynamic> usersList = snapshot.value as List<dynamic>;
+        fetchedUsers = usersList.where((value) => value != null).map((value) {
+          Map<String, dynamic> userJson = Map<String, dynamic>.from(value as Map);
+          return User.fromJson(userJson);
+        }).toList();
+      } else if (snapshot.value is Map) {
+        Map<dynamic, dynamic> usersMap = snapshot.value as Map<dynamic, dynamic>;
+        fetchedUsers = usersMap.values.where((value) => value != null).map((value) {
+          Map<String, dynamic> userJson = Map<String, dynamic>.from(value as Map);
+          return User.fromJson(userJson);
+        }).toList();
+      }
+
+      setState(() {
+        users = fetchedUsers;
+      });
+
+      // Filter users who have sent a message to the admin
+      await _fetchMessagesForUsers(fetchedUsers);
+    }
+  }
+
+  Future<void> _fetchMessagesForUsers(List<User> allUsers) async {
+    DataSnapshot snapshot = await messagesRef.get();
+    print('Messages event: ${snapshot.value}'); // Debug log
+
+    if (snapshot.exists) {
+      List<String> userIds = [];
+
+      if (snapshot.value is List) {
+        List<dynamic> messagesList = snapshot.value as List<dynamic>;
+        messagesList.where((value) => value != null).forEach((value) {
+          Map<String, dynamic> messageJson = Map<String, dynamic>.from(value as Map);
+          if (messageJson['receiver_id'] == '1' || messageJson['sender_id'] == '1') {
+            String otherUserId = messageJson['receiver_id'] == '1'
+                ? messageJson['sender_id'].toString()
+                : messageJson['receiver_id'].toString();
+            userIds.add(otherUserId);
+          }
+        });
+      } else if (snapshot.value is Map) {
+        Map<dynamic, dynamic> messagesMap = snapshot.value as Map<dynamic, dynamic>;
+        messagesMap.values.where((value) => value != null).forEach((value) {
+          Map<String, dynamic> messageJson = Map<String, dynamic>.from(value as Map);
+          if (messageJson['receiver_id'] == '1' || messageJson['sender_id'] == '1') {
+            String otherUserId = messageJson['receiver_id'] == '1'
+                ? messageJson['sender_id'].toString()
+                : messageJson['receiver_id'].toString();
+            userIds.add(otherUserId);
+          }
+        });
+      }
+
+      setState(() {
+        users = allUsers.where((user) => userIds.contains(user.id)).toList();
+      });
+    }
+  }
+
+  Future<void> _fetchMessages(String userId) async {
+    DataSnapshot snapshot = await messagesRef.get();
+    print('Messages event: ${snapshot.value}'); // Debug log
+
+    if (snapshot.exists) {
+      List<Message> fetchedMessages = [];
+
+      if (snapshot.value is List) {
+        List<dynamic> messagesList = snapshot.value as List<dynamic>;
+        fetchedMessages = messagesList.where((value) => value != null).map((value) {
+          Map<String, dynamic> messageJson = Map<String, dynamic>.from(value as Map);
+          return Message.fromJson(messageJson);
+        }).toList();
+      } else if (snapshot.value is Map) {
+        Map<dynamic, dynamic> messagesMap = snapshot.value as Map<dynamic, dynamic>;
+        fetchedMessages = messagesMap.values.where((value) => value != null).map((value) {
+          Map<String, dynamic> messageJson = Map<String, dynamic>.from(value as Map);
+          return Message.fromJson(messageJson);
+        }).toList();
+      }
+
+      setState(() {
+        messages = fetchedMessages.where((message) =>
+            (message.senderId == userId && message.receiverId == '1') ||
+            (message.senderId == '1' && message.receiverId == userId)).toList();
+      });
+    }
+  }
+
+  Future<void> _sendMessage(String message) async {
+    String timestamp = DateTime.now().toIso8601String();
+    DatabaseReference newMessageRef = messagesRef.push();
+    await newMessageRef.set({
+      'sender_id': '1', // Admin's user ID
+      'receiver_id': selectedUser!.id,
+      'message': message,
+      'timestamp': timestamp,
+    });
+    _controller.clear();
+    _fetchMessages(selectedUser!.id);
   }
 
   @override
@@ -118,7 +182,7 @@ class _AdminMessagingPageState extends State<AdminMessagingPage> {
                             itemCount: messages.length,
                             itemBuilder: (context, index) {
                               var message = messages[index];
-                              bool isSender = message.senderId == '3';
+                              bool isSender = message.senderId == '1';
                               return Align(
                                 alignment: isSender ? Alignment.centerRight : Alignment.centerLeft,
                                 child: Container(
@@ -188,7 +252,6 @@ class _AdminMessagingPageState extends State<AdminMessagingPage> {
                               onPressed: () {
                                 if (_controller.text.isNotEmpty) {
                                   _sendMessage(_controller.text);
-                                  _controller.clear();
                                 }
                               },
                             ),
@@ -212,8 +275,8 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['id'],
-      name: json['name'],
+      id: json['user_id'].toString(),
+      name: '${json['first_name']} ${json['last_name']}',
     );
   }
 }
@@ -225,13 +288,19 @@ class Message {
   final String message;
   final String timestamp;
 
-  Message({required this.id, required this.senderId, required this.receiverId, required this.message, required this.timestamp});
+  Message({
+    required this.id,
+    required this.senderId,
+    required this.receiverId,
+    required this.message,
+    required this.timestamp,
+  });
 
   factory Message.fromJson(Map<String, dynamic> json) {
     return Message(
-      id: json['id'],
-      senderId: json['sender_id'],
-      receiverId: json['receiver_id'],
+      id: json['id']?.toString() ?? '',
+      senderId: json['sender_id'].toString(),
+      receiverId: json['receiver_id'].toString(),
       message: json['message'],
       timestamp: json['timestamp'],
     );

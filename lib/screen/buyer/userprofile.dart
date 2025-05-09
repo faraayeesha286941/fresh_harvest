@@ -1,7 +1,5 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:fresh_harvest/appconfig/myconfig.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'upload_documents.dart'; // Import the new page
 import 'purchases_screen.dart'; // Import PurchasesScreen
@@ -29,34 +27,24 @@ class _UserProfileState extends State<UserProfile> {
     _loadUserProfile();
   }
 
-  _loadUserProfile() async {
+  Future<void> _loadUserProfile() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? userEmail = prefs.getString('userEmail');
 
     if (userEmail != null) {
-      var url = Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/userprofile.php');
-      var response = await http.post(url, body: {
-        'email': userEmail,  // Include the email parameter in the request
-      });
+      DatabaseReference userRef = FirebaseDatabase.instance.ref().child('db_user');
+      Query query = userRef.orderByChild('email').equalTo(userEmail);
+      DataSnapshot snapshot = await query.get();
 
-      if (response.statusCode == 200) {
-        var jsonResponse = jsonDecode(response.body);
-        print(jsonResponse);
-
-        if (jsonResponse['message'] == 'success') {
-          var data = jsonResponse['data'];
-          setState(() {
-            firstName = data['first_name'];
-            lastName = data['last_name'];
-            email = data['email'];
-            accountType = data['account_type'];
-            loading = false;
-          });
-        } else {
-          setState(() {
-            loading = false;
-          });
-        }
+      if (snapshot.exists) {
+        Map<String, dynamic> userData = Map<String, dynamic>.from((snapshot.value as Map).values.first);
+        setState(() {
+          firstName = userData['first_name'] ?? '';
+          lastName = userData['last_name'] ?? '';
+          email = userData['email'] ?? '';
+          accountType = userData['account_type'] ?? '';
+          loading = false;
+        });
       } else {
         setState(() {
           loading = false;

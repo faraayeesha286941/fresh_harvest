@@ -1,9 +1,7 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:firebase_database/firebase_database.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:fresh_harvest/appconfig/myconfig.dart';
 
 class ChatPage extends StatefulWidget {
   final String userId;
@@ -18,60 +16,83 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> {
   final TextEditingController _controller = TextEditingController();
   List<Message> messages = [];
-  Timer? timer;
+  late DatabaseReference messagesRef;
+  late DatabaseReference counterRef;
+  StreamSubscription<DatabaseEvent>? messagesSubscription;
 
   @override
   void initState() {
     super.initState();
+    messagesRef = FirebaseDatabase.instance.ref().child('messages');
+    counterRef = FirebaseDatabase.instance.ref().child('messages_counter');
     _fetchMessages();
-    timer = Timer.periodic(Duration(seconds: 5), (Timer t) => _fetchMessages());
+    messagesSubscription = messagesRef.onValue.listen((event) {
+      _fetchMessages();
+    });
   }
 
   @override
   void dispose() {
-    timer?.cancel();
+    messagesSubscription?.cancel();
     super.dispose();
   }
 
   Future<void> _fetchMessages() async {
-    final serverUrl = MyConfig().SERVER;
-
-    final response = await http.get(Uri.parse('$serverUrl/fresh_harvest/php/getmessages.php?user_id=${widget.userId}&receiver_id=${widget.receiverId}'));
-
-    if (response.statusCode == 200) {
-      var jsonResponse = jsonDecode(response.body);
-      if (jsonResponse is List) {
+    DataSnapshot snapshot = await messagesRef.get();
+    if (snapshot.exists) {
+      if (snapshot.value is Map) {
+        Map<dynamic, dynamic> messagesData = snapshot.value as Map<dynamic, dynamic>;
         setState(() {
-          messages = jsonResponse.map((data) => Message.fromJson(data)).toList();
+          messages = messagesData.entries
+              .map((entry) => Message.fromJson(Map<String, dynamic>.from(entry.value)))
+              .toList()
+              .where((message) =>
+                  (message.senderId == widget.userId && message.receiverId == widget.receiverId) ||
+                  (message.senderId == widget.receiverId && message.receiverId == widget.userId))
+              .toList();
         });
-      } else {
-        // Handle unexpected response format
-        print('Unexpected response format: $jsonResponse');
+      } else if (snapshot.value is List) {
+        List<dynamic> messagesData = snapshot.value as List<dynamic>;
+        setState(() {
+          messages = messagesData
+              .where((entry) => entry != null)
+              .map((entry) => Message.fromJson(Map<String, dynamic>.from(entry)))
+              .toList()
+              .where((message) =>
+                  (message.senderId == widget.userId && message.receiverId == widget.receiverId) ||
+                  (message.senderId == widget.receiverId && message.receiverId == widget.userId))
+              .toList();
+        });
       }
     } else {
-      // Handle error
-      print('Error fetching messages: ${response.statusCode}');
+      print('No messages found');
     }
   }
 
   Future<void> _sendMessage(String message) async {
-    final serverUrl = MyConfig().SERVER;
+    String timestamp = DateTime.now().toIso8601String();
 
-    final response = await http.post(
-      Uri.parse('$serverUrl/fresh_harvest/php/sendmessage.php'),
-      body: {
-        'sender_id': widget.userId,
-        'receiver_id': widget.receiverId,
-        'message': message,
-      },
-    );
-
-    if (response.statusCode == 200) {
-      _fetchMessages(); // Refresh messages after sending a new one
-    } else {
-      // Handle error
-      print('Error sending message: ${response.statusCode}');
+    // Get the current value of messages_counter
+    DataSnapshot counterSnapshot = await counterRef.get();
+    int messageId = 1;
+    if (counterSnapshot.exists) {
+      messageId = counterSnapshot.value as int;
     }
+
+    // Increment the messages_counter
+    await counterRef.set(messageId + 1);
+
+    // Save the new message with the incremented ID
+    DatabaseReference newMessageRef = messagesRef.child(messageId.toString());
+    await newMessageRef.set({
+      'id': messageId.toString(),
+      'sender_id': widget.userId,
+      'receiver_id': widget.receiverId,
+      'message': message,
+      'timestamp': timestamp,
+    });
+    _controller.clear();
+    _fetchMessages();
   }
 
   @override
@@ -157,7 +178,6 @@ class _ChatPageState extends State<ChatPage> {
                   onPressed: () {
                     if (_controller.text.isNotEmpty) {
                       _sendMessage(_controller.text);
-                      _controller.clear();
                     }
                   },
                 ),
@@ -177,15 +197,21 @@ class Message {
   final String message;
   final String timestamp;
 
-  Message({required this.id, required this.senderId, required this.receiverId, required this.message, required this.timestamp});
+  Message({
+    required this.id,
+    required this.senderId,
+    required this.receiverId,
+    required this.message,
+    required this.timestamp,
+  });
 
   factory Message.fromJson(Map<String, dynamic> json) {
     return Message(
-      id: json['id'],
-      senderId: json['sender_id'],
-      receiverId: json['receiver_id'],
-      message: json['message'],
-      timestamp: json['timestamp'],
+      id: json['id']?.toString() ?? '',
+      senderId: json['sender_id']?.toString() ?? '',
+      receiverId: json['receiver_id']?.toString() ?? '',
+      message: json['message']?.toString() ?? '',
+      timestamp: json['timestamp']?.toString() ?? '',
     );
   }
 }

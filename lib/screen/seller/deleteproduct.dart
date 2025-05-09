@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:fresh_harvest/appconfig/myconfig.dart';
 
 class DeleteProduct extends StatefulWidget {
   @override
@@ -10,26 +8,63 @@ class DeleteProduct extends StatefulWidget {
 }
 
 class _DeleteProductState extends State<DeleteProduct> {
-  TextEditingController productIdController = TextEditingController();
+  bool _isLoading = false;
+  Map<String, dynamic> products = {};
 
-  Future<void> deleteProduct() async {
-    final response = await http.post(
-      Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/deleteproduct.php'),
-      body: {
-        'product_id': productIdController.text,
-      },
-    );
+  @override
+  void initState() {
+    super.initState();
+    fetchAllProducts();
+  }
 
-    if (response.statusCode == 200) {
-      var jsonResponse = jsonDecode(response.body);
-      if (jsonResponse['message'] == 'success') {
-        Fluttertoast.showToast(msg: 'Product deleted successfully');
+  Future<void> fetchAllProducts() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    DatabaseReference productRef = FirebaseDatabase.instance.ref().child('db_product');
+    DatabaseEvent event = await productRef.once();
+
+    print("Database event snapshot: ${event.snapshot.value}");
+
+    if (event.snapshot.value != null) {
+      Map<String, dynamic> products;
+      if (event.snapshot.value is List) {
+        products = (event.snapshot.value as List).asMap().map((key, value) => MapEntry(key.toString(), value));
       } else {
-        Fluttertoast.showToast(msg: jsonResponse['message']);
+        products = Map<String, dynamic>.from(event.snapshot.value as Map);
       }
+      setState(() {
+        this.products = products;
+      });
     } else {
-      Fluttertoast.showToast(msg: 'Failed to connect to the server');
+      Fluttertoast.showToast(msg: 'No products found');
     }
+
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  Future<void> deleteProduct(String productId) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    DatabaseReference productRef = FirebaseDatabase.instance.ref().child('db_product').child(productId);
+
+    try {
+      await productRef.remove();
+      Fluttertoast.showToast(msg: 'Product deleted successfully');
+      fetchAllProducts(); // Refresh the product list
+    } catch (e) {
+      Fluttertoast.showToast(msg: 'Failed to delete product');
+      print('Error: $e');
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
@@ -37,31 +72,45 @@ class _DeleteProductState extends State<DeleteProduct> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Delete Product'),
+        backgroundColor: Colors.blue[800],
       ),
       body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              TextField(
-                controller: productIdController,
-                decoration: InputDecoration(
-                  labelText: 'Product ID',
-                  border: OutlineInputBorder(),
-                  isDense: true,
-                  contentPadding: EdgeInsets.all(8.0),
+        child: _isLoading
+            ? CircularProgressIndicator()
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    DataTable(
+                      columns: const [
+                        DataColumn(label: Text('ID')),
+                        DataColumn(label: Text('Name')),
+                        DataColumn(label: Text('Delete')),
+                      ],
+                      rows: products.values.map((product) {
+                        Map<String, dynamic> productMap = Map<String, dynamic>.from(product);
+                        return DataRow(
+                          cells: [
+                            DataCell(Text(productMap['product_id'].toString())),
+                            DataCell(Text(productMap['product_name'] ?? '')),
+                            DataCell(
+                              ElevatedButton(
+                                onPressed: () => deleteProduct(productMap['product_id'].toString()),
+                                child: Text('Delete'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red, // Button color
+                                  foregroundColor: Colors.white, // Text color
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+                  ],
                 ),
-                keyboardType: TextInputType.number,
               ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: deleteProduct,
-                child: Text('Delete Product'),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

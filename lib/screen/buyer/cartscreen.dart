@@ -1,8 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:firebase_database/firebase_database.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:fresh_harvest/appconfig/myconfig.dart';
 import 'productdetails.dart';
 import 'checkout_screen.dart';
 
@@ -27,57 +25,95 @@ class _CartScreenState extends State<CartScreen> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String userId = prefs.getString('userId') ?? '';
 
-    final response = await http.get(Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/getcartitems.php?user_id=$userId&server_url=${MyConfig().SERVER}'));
+    print('Fetching cart items for user: $userId'); // Debug log
 
-    if (response.statusCode == 200) {
-      List<dynamic> cartJson = jsonDecode(response.body);
-      return cartJson.map((json) => CartItem.fromJson(json)).toList();
+    DatabaseReference cartRef = FirebaseDatabase.instance.ref().child('db_cart');
+    Query query = cartRef.orderByChild('user_id').equalTo(userId);
+    DatabaseEvent event = await query.once();
+
+    print('Database event snapshot: ${event.snapshot.value}'); // Debug log
+
+    List<CartItem> cartItems = [];
+    if (event.snapshot.value != null) {
+      var cartData = event.snapshot.value;
+
+      if (cartData is List) {
+        for (var i = 0; i < cartData.length; i++) {
+          if (cartData[i] != null) {
+            var value = cartData[i] as Map<dynamic, dynamic>;
+            print('Cart item raw data: $value'); // Debug log
+
+            var productId = value['product_id'].toString();
+
+            // Fetch product details
+            DatabaseReference productRef = FirebaseDatabase.instance.ref().child('db_product').child(productId);
+            DatabaseEvent productEvent = await productRef.once();
+            var productSnapshot = productEvent.snapshot;
+
+            print('Product event snapshot: ${productSnapshot.value}'); // Debug log
+
+            if (productSnapshot.exists) {
+              var productJson = Map<String, dynamic>.from(productSnapshot.value as Map);
+              productJson['quantity'] = value['quantity']; // Add quantity to the product data
+              productJson['cart_id'] = i.toString(); // Add cart_id to the product data
+              cartItems.add(CartItem.fromJson(productJson));
+            } else {
+              print('Product not found for id: $productId'); // Debug log
+            }
+          }
+        }
+      } else if (cartData is Map) {
+        for (var key in cartData.keys) {
+          var value = cartData[key];
+          print('Cart item raw data: $value'); // Debug log
+
+          var productId = value['product_id'].toString();
+
+          // Fetch product details
+          DatabaseReference productRef = FirebaseDatabase.instance.ref().child('db_product').child(productId);
+          DatabaseEvent productEvent = await productRef.once();
+          var productSnapshot = productEvent.snapshot;
+
+          print('Product event snapshot: ${productSnapshot.value}'); // Debug log
+
+          if (productSnapshot.exists) {
+            var productJson = Map<String, dynamic>.from(productSnapshot.value as Map);
+            productJson['quantity'] = value['quantity']; // Add quantity to the product data
+            productJson['cart_id'] = key; // Add cart_id to the product data
+            cartItems.add(CartItem.fromJson(productJson));
+          } else {
+            print('Product not found for id: $productId'); // Debug log
+          }
+        }
+      }
     } else {
-      throw Exception('Failed to load cart items');
+      print('No cart items found'); // Debug log
     }
+
+    print('Loaded cart items: $cartItems'); // Debug log
+    return cartItems;
   }
 
   Future<void> updateCartQuantity(String cartId, int quantity) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String userId = prefs.getString('userId') ?? '';
+    print('Updating quantity for cart item $cartId to $quantity'); // Debug log
+    DatabaseReference cartRef = FirebaseDatabase.instance.ref().child('db_cart/$cartId');
+    await cartRef.update({
+      'quantity': quantity,
+    });
 
-    final response = await http.post(
-      Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/updatecartquantity.php'),
-      body: {
-        'user_id': userId,
-        'cart_id': cartId,
-        'quantity': quantity.toString(),
-      },
-    );
-
-    if (response.statusCode == 200) {
-      setState(() {
-        futureCartItems = fetchCartItems();
-      });
-    } else {
-      throw Exception('Failed to update cart quantity');
-    }
+    setState(() {
+      futureCartItems = fetchCartItems();
+    });
   }
 
   Future<void> deleteCartItem(String cartId) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String userId = prefs.getString('userId') ?? '';
+    print('Deleting cart item $cartId'); // Debug log
+    DatabaseReference cartRef = FirebaseDatabase.instance.ref().child('db_cart/$cartId');
+    await cartRef.remove();
 
-    final response = await http.post(
-      Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/deletecartitem.php'),
-      body: {
-        'user_id': userId,
-        'cart_id': cartId,
-      },
-    );
-
-    if (response.statusCode == 200) {
-      setState(() {
-        futureCartItems = fetchCartItems();
-      });
-    } else {
-      throw Exception('Failed to delete cart item');
-    }
+    setState(() {
+      futureCartItems = fetchCartItems();
+    });
   }
 
   void _checkout() {
@@ -107,6 +143,7 @@ class _CartScreenState extends State<CartScreen> {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const CircularProgressIndicator();
             } else if (snapshot.hasError) {
+              print('Error loading cart items: ${snapshot.error}'); // Debug log
               return Text('Error: ${snapshot.error}');
             }
 
@@ -227,7 +264,7 @@ class _CartScreenState extends State<CartScreen> {
 
 class CartItem {
   final String cartId;
-  final String productId; // Add productId field
+  final String productId;
   final String productName;
   final double price;
   final String imageUrl;
@@ -235,7 +272,7 @@ class CartItem {
 
   CartItem({
     required this.cartId,
-    required this.productId, // Initialize productId
+    required this.productId,
     required this.productName,
     required this.price,
     required this.imageUrl,
@@ -243,13 +280,22 @@ class CartItem {
   });
 
   factory CartItem.fromJson(Map<String, dynamic> json) {
+    double price;
+    try {
+      price = (json['price'] is int) ? (json['price'] as int).toDouble() : double.parse(json['price']?.toString() ?? '0.0');
+      print('Parsed price: $price'); // Debug log
+    } catch (e) {
+      price = 0.0;
+      print('Error parsing price: $e');
+    }
+
     return CartItem(
-      cartId: json['cart_id'],
-      productId: json['product_id'], // Parse productId from JSON
-      productName: json['product_name'],
-      price: double.parse(json['price']),
-      imageUrl: json['image_url'],
-      quantity: int.parse(json['quantity']),
+      cartId: json['cart_id']?.toString() ?? '',
+      productId: json['product_id']?.toString() ?? '',
+      productName: json['product_name'] ?? '',
+      price: price,
+      imageUrl: 'https://firebasestorage.googleapis.com/v0/b/freshharvest-96950.appspot.com/o/products%2F${json['product_id'] ?? ''}_1.jpg?alt=media',
+      quantity: json['quantity'] ?? 0,
     );
   }
 }

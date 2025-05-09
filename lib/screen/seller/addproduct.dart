@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:fresh_harvest/appconfig/myconfig.dart';
 
 class AddProduct extends StatefulWidget {
   @override
@@ -40,35 +40,50 @@ class _AddProductState extends State<AddProduct> {
       return;
     }
 
-    var request = http.MultipartRequest(
-      'POST',
-      Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/addproduct.php'),
-    );
-    request.fields['product_name'] = productNameController.text;
-    request.fields['product_description'] = descriptionController.text;
-    request.fields['price'] = priceController.text;
-    request.fields['category'] = _selectedCategory;
-    request.fields['location'] = locationController.text;
-    request.fields['amount'] = amountController.text;
-    request.fields['seller_id'] = '1'; // Replace with actual seller ID
-    request.files.add(await http.MultipartFile.fromPath('image', _image!.path));
+    // Get user ID from SharedPreferences
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String userId = prefs.getString('userId') ?? '1'; // Default to '1' for testing purposes
 
-    print('Sending request with fields: ${request.fields}'); // Debugging print
+    try {
+      DatabaseReference counterRef = FirebaseDatabase.instance.ref().child('product_counter');
+      DatabaseReference productRef = FirebaseDatabase.instance.ref().child('db_product');
 
-    var response = await request.send();
+      // Get the current counter value
+      DatabaseEvent counterEvent = await counterRef.once();
+      int currentCounter = counterEvent.snapshot.value as int;
+      int newProductId = currentCounter + 1;
 
-    if (response.statusCode == 200) {
-      response.stream.transform(utf8.decoder).listen((value) {
-        print("Response: $value");  // Log the response
-        if (value.contains('success')) {
-          Fluttertoast.showToast(msg: 'Product added successfully');
-          Navigator.pop(context);
-        } else {
-          Fluttertoast.showToast(msg: value);
-        }
-      });
-    } else {
+      // Update the counter
+      await counterRef.set(newProductId);
+
+      // Upload image to Firebase Storage
+      String imageName = 'products/${newProductId}_1.jpg';
+      await FirebaseStorage.instance.ref(imageName).putFile(_image!);
+      String imageUrl = await FirebaseStorage.instance.ref(imageName).getDownloadURL();
+
+      // Prepare product data
+      Map<String, dynamic> productData = {
+        'amount': int.parse(amountController.text),
+        'category': _selectedCategory,
+        'date_reg': DateTime.now().toIso8601String(),
+        'place_location': locationController.text,
+        'price': double.parse(priceController.text),
+        'product_description': descriptionController.text,
+        'product_id': newProductId,
+        'product_name': productNameController.text,
+        'seller_id': userId,
+        'seller_name': 'Added by Admin',
+        'image_url': imageUrl,
+      };
+
+      // Save product data to Firebase Realtime Database
+      await productRef.child(newProductId.toString()).set(productData);
+
+      Fluttertoast.showToast(msg: 'Product added successfully');
+      Navigator.pop(context);
+    } catch (e) {
       Fluttertoast.showToast(msg: 'Failed to add product');
+      print('Error: $e');
     }
   }
 

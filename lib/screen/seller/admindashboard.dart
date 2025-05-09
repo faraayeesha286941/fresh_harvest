@@ -37,23 +37,6 @@ class AdminDashboard extends StatelessWidget {
               ),
               SizedBox(height: 20),
               ElevatedButton.icon(
-                icon: Icon(Icons.receipt),
-                label: Text('Orders'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue[800],
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                onPressed: () {
-                  // Navigate to Orders screen or perform appropriate action
-                  // Navigator.pushNamed(context, '/adminOrders');
-                },
-              ),
-              SizedBox(height: 20),
-              ElevatedButton.icon(
                 icon: Icon(Icons.message),
                 label: Text('Messages'),
                 style: ElevatedButton.styleFrom(

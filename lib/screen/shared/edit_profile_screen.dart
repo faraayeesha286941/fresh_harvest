@@ -1,9 +1,6 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:firebase_database/firebase_database.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:fresh_harvest/appconfig/myconfig.dart';
 
 class EditProfileScreen extends StatefulWidget {
   @override
@@ -15,9 +12,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  String initialUsername = '';
-  String initialEmail = '';
-
   bool _loading = true;
 
   @override
@@ -28,31 +22,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   _loadUserProfile() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? userEmail = prefs.getString('userEmail');
+    String? userId = prefs.getString('userId');
 
-    if (userEmail != null) {
-      var url = Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/userprofile.php');
-      var response = await http.post(url, body: {
-        'email': userEmail,
-      });
+    if (userId != null) {
+      DatabaseReference userRef = FirebaseDatabase.instance.ref().child('db_user/$userId');
+      DataSnapshot snapshot = await userRef.get();
 
-      if (response.statusCode == 200) {
-        var jsonResponse = response.body;
-        if (jsonResponse.startsWith('success')) {
-          jsonResponse = jsonResponse.substring('success'.length);
-          var data = json.decode(jsonResponse);
-          setState(() {
-            initialUsername = data['username'] ?? ''; // Use empty string if null
-            initialEmail = data['email'] ?? ''; // Use empty string if null
-            _usernameController.text = data['username'] ?? '';
-            _emailController.text = data['email'] ?? '';
-            _loading = false;
-          });
-        } else {
-          setState(() {
-            _loading = false;
-          });
-        }
+      if (snapshot.exists) {
+        Map<String, dynamic> data = Map<String, dynamic>.from(snapshot.value as Map);
+        setState(() {
+          _usernameController.text = data['username'] ?? '';
+          _emailController.text = data['email'] ?? '';
+          _loading = false;
+        });
       } else {
         setState(() {
           _loading = false;
@@ -65,33 +47,56 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-  Future<void> _updateProfile() async {
+  Future<void> _updateUsername() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String userId = prefs.getString('userId') ?? '';
 
-    var url = Uri.parse('${MyConfig().SERVER}/fresh_harvest/php/update_profile.php');
-    var response = await http.post(url, body: {
-      'user_id': userId,
-      'username': _usernameController.text,
-      'email': _emailController.text,
-      'password': _passwordController.text,
-    });
+    DatabaseReference userRef = FirebaseDatabase.instance.ref().child('db_user/$userId');
 
-    if (response.statusCode == 200) {
-      var jsonResponse = json.decode(response.body);
-      if (jsonResponse['message'] == 'Profile updated successfully') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Profile updated successfully')),
-        );
-        Navigator.pop(context);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update profile')),
-        );
-      }
-    } else {
+    try {
+      await userRef.update({'username': _usernameController.text});
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update profile')),
+        SnackBar(content: Text('Username updated successfully')),
+      );
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update username')),
+      );
+    }
+  }
+
+  Future<void> _updateEmail() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String userId = prefs.getString('userId') ?? '';
+
+    DatabaseReference userRef = FirebaseDatabase.instance.ref().child('db_user/$userId');
+
+    try {
+      await userRef.update({'email': _emailController.text});
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Email updated successfully')),
+      );
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update email')),
+      );
+    }
+  }
+
+  Future<void> _updatePassword() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String userId = prefs.getString('userId') ?? '';
+
+    DatabaseReference userRef = FirebaseDatabase.instance.ref().child('db_user/$userId');
+
+    try {
+      await userRef.update({'password': _passwordController.text});
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Password updated successfully')),
+      );
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update password')),
       );
     }
   }
@@ -127,6 +132,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     ),
                   ),
+                  const SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: _updateUsername,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue[800],
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text(
+                      'Update Username',
+                      style: TextStyle(fontSize: 18),
+                    ),
+                  ),
                   const SizedBox(height: 20),
                   TextField(
                     controller: _emailController,
@@ -134,6 +155,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       labelText: 'Email',
                       border: OutlineInputBorder(),
                       contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: _updateEmail,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue[800],
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text(
+                      'Update Email',
+                      style: TextStyle(fontSize: 18),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -146,9 +183,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                     obscureText: true,
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 10),
                   ElevatedButton(
-                    onPressed: _updateProfile,
+                    onPressed: _updatePassword,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue[800],
                       foregroundColor: Colors.white,
@@ -158,7 +195,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ),
                     ),
                     child: const Text(
-                      'Update Profile',
+                      'Update Password',
                       style: TextStyle(fontSize: 18),
                     ),
                   ),

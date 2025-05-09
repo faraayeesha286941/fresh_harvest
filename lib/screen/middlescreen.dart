@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fresh_harvest/screen/buyer/userregistration.dart';
 import 'package:fresh_harvest/screen/buyer/userlogin.dart';
 
@@ -16,10 +16,9 @@ class _MiddleScreenState extends State<MiddleScreen> {
   }
 
   checkLoginStatus() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+    User? user = FirebaseAuth.instance.currentUser;
 
-    if (isLoggedIn) {
+    if (user != null) {
       Navigator.pushReplacementNamed(context, '/home');
     } else {
       // Handle not logged in scenario, maybe navigate to login page again or show message.
